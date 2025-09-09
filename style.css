@@ -1,0 +1,34 @@
+/* Custom styles to match the modern government theme */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+}
+.sidebar {
+    background-color: #e8f0fe;
+}
+.card {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+    padding: 20px;
+}
+.header-title {
+    color: #004b89;
+}
+#map {
+    height: 300px;
+    border-radius: 8px;
+}
+.loader {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #004b89;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Early Warning System</title>
+    
+    <!-- Tailwind CSS for utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for creating charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Leaflet for interactive maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Link to your custom CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex h-screen">
+
+    <!-- Sidebar for Navigation and Controls -->
+    <aside class="sidebar w-1/4 p-6 overflow-y-auto">
+        <h1 class="text-2xl font-bold header-title">IN National Monsoon Watch</h1>
+        <p class="text-sm text-gray-600 mb-6">AI-Powered Flood & Drought Early Warning System</p>
+
+        <label for="city-select" class="block mb-2 font-bold text-gray-700">Select a City</label>
+        <select id="city-select" class="w-full p-2 border rounded-lg bg-white">
+            <!-- City options will be populated by JavaScript -->
+        </select>
+
+        <div id="city-info" class="mt-4 p-4 bg-blue-100 text-blue-800 rounded-lg">
+            Displaying forecast for Pune.
+        </div>
+
+        <div class="mt-8">
+            <h2 class="font-bold text-gray-700">About</h2>
+            <p class="text-sm text-gray-600 mt-2">
+                This dashboard provides real-time weather data and AI-driven flood risk assessments based on precipitation forecasts.
+            </p>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="w-3/4 p-8 overflow-y-auto">
+        <div id="main-dashboard">
+            <h2 id="dashboard-title" class="text-3xl font-bold header-title mb-4">AI Risk Assessment for Pune</h2>
+
+            <!-- AI Status Alert Box -->
+            <div id="ai-status" class="p-4 rounded-lg text-white mb-6">
+                Status will be updated here.
+            </div>
+
+            <!-- Current Conditions Metrics -->
+            <h3 class="text-2xl font-semibold header-title mb-4">Current Conditions</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="card text-center">
+                    <p class="text-lg text-gray-500">Temperature</p>
+                    <p id="temp-value" class="text-4xl font-bold header-title">-</p>
+                </div>
+                <div class="card text-center">
+                    <p class="text-lg text-gray-500">Humidity</p>
+                    <p id="humidity-value" class="text-4xl font-bold header-title">-</p>
+                </div>
+                <div class="card text-center">
+                    <p class="text-lg text-gray-500">Rainfall (3h)</p>
+                    <p id="rainfall-value" class="text-4xl font-bold header-title">-</p>
+                </div>
+            </div>
+
+            <!-- Map and Forecast Chart -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-2xl font-semibold header-title mb-4">Geographic Location</h3>
+                    <div id="map" class="card"></div>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold header-title mb-4">5-Day Precipitation Forecast (mm per 3h)</h3>
+                    <div class="card">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Loading Spinner -->
+        <div id="loader" class="hidden justify-center items-center h-full">
+            <div class="loader"></div>
+        </div>
+    </main>
+
+    <!-- Link to your custom JavaScript file -->
+    <script src="script.js"></script>
+</body>
+</html>
