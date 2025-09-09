@@ -159,15 +159,28 @@ h3:first-child { margin-top: 0; }
         overflow-y: visible; /* Allow content to flow naturally */
     }
 
-    /* Make inner containers stack vertically too */
-    .summary-container,
+    /* --- UPDATED SUMMARY SECTION --- */
+    .summary-container {
+        flex-direction: row;  /* Keep boxes side-by-side */
+        flex-wrap: wrap;      /* Allow them to wrap to the next line if needed */
+        gap: 10px;            
+    }
+
+    .summary-box {
+        flex-basis: 150px; /* Give them a base size */
+        flex-grow: 1;      /* Allow them to grow and share space */
+        width: auto;       /* Override the desktop width */
+    }
+    /* --- End of Updated Section --- */
+
+
+    /* Make inner containers for details stack vertically */
     .current-conditions,
     .charts-maps {
         flex-direction: column;
     }
 
     /* Make all boxes and cards inside the containers full-width */
-    .summary-box,
     .card,
     .map-container,
     .forecast-container {
