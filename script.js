@@ -1,176 +1,181 @@
 // --- CONFIGURATION ---
-const OWM_API_KEY = '5a4c5e3313bc10b8a4e086f4c09b522f'; // Your API Key
-const cities = {
-    "Pune": { lat: 18.5204, lon: 73.8567 },
-    "Delhi": { lat: 28.7041, lon: 77.1025 },
-    "Mumbai": { lat: 19.0760, lon: 72.8777 },
-    "Bengaluru": { lat: 12.9716, lon: 77.5946 },
-    "Kolkata": { lat: 22.5726, lon: 88.3639 },
-    "Chennai": { lat: 13.0827, lon: 80.2707 },
-    "Jaipur": { lat: 26.9124, lon: 75.7873 }
-};
+const API_KEY = "5a4c5e3313bc10b8a4e086f4c09b522f"; // ⚠️ PASTE YOUR OWN API KEY HERE!
 
 // --- DOM ELEMENTS ---
-const citySelect = document.getElementById('city-select');
-const cityInfo = document.getElementById('city-info');
-const dashboardTitle = document.getElementById('dashboard-title');
-const aiStatus = document.getElementById('ai-status');
-const tempValue = document.getElementById('temp-value');
-const humidityValue = document.getElementById('humidity-value');
-const rainfallValue = document.getElementById('rainfall-value');
-const mainDashboard = document.getElementById('main-dashboard');
-const loader = document.getElementById('loader');
+const districtSelect = document.getElementById('district-select');
+const detailsTitle = document.getElementById('details-title');
+// Summary List Elements
+const dangerListEl = document.getElementById('danger-list');
+const warningListEl = document.getElementById('warning-list');
+const normalListEl = document.getElementById('normal-list');
+// Detailed View Elements
+const riskAssessmentEl = document.getElementById('risk-assessment');
+const temperatureEl = document.getElementById('temperature');
+const humidityEl = document.getElementById('humidity');
+const rainfallEl = document.getElementById('rainfall');
+const forecastCanvas = document.getElementById('forecast-chart');
+const mapEl = document.getElementById('map');
+const mapLegendEl = document.getElementById('map-legend');
+const chartLegendEl = document.getElementById('chart-legend');
 
+// --- APP STATE ---
 let map;
 let forecastChart;
+let cityMarker;
+let allDistrictsData = []; // To store data for all districts
 
-// --- AI MODEL ---
-function runAIFloodModel(hourlyForecast) {
-    const DANGER_THRESHOLD = 100;
-    const HIGH_RISK_THRESHOLD = 50;
-    const MODERATE_RISK_THRESHOLD = 25;
-    
-    // OWM provides data every 3 hours, so we need 8 intervals for 24 hours
-    const next24hPrecipitation = hourlyForecast.slice(0, 8).reduce((sum, hour) => sum + hour, 0);
+// --- MAP MARKER ICONS ---
+const greenIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
+const yellowIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
+const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
 
-    let risk = "Normal";
-    let message = `Conditions Normal: Predicted rainfall of ${next24hPrecipitation.toFixed(2)} mm is within the safe limit.`;
-    
-    if (next24hPrecipitation > DANGER_THRESHOLD) {
-        risk = "Danger";
-        message = `Extreme Flood Warning: Predicted rainfall of ${next24hPrecipitation.toFixed(2)} mm exceeds the DANGER threshold of ${DANGER_THRESHOLD} mm.`;
-    } else if (next24hPrecipitation > HIGH_RISK_THRESHOLD) {
-        risk = "High Risk";
-        message = `Flood Watch Issued: Predicted rainfall of ${next24hPrecipitation.toFixed(2)} mm exceeds the HIGH RISK threshold of ${HIGH_RISK_THRESHOLD} mm.`;
-    } else if (next24hPrecipitation > MODERATE_RISK_THRESHOLD) {
-        risk = "Moderate Risk";
-        message = `Alert: Predicted rainfall of ${next24hPrecipitation.toFixed(2)} mm exceeds the MODERATE risk threshold of ${MODERATE_RISK_THRESHOLD} mm.`;
+
+// --- CORE LOGIC ---
+async function fetchAndProcessAllDistricts() {
+    if (API_KEY === "YOUR_API_KEY_HERE") {
+        alert("Please enter your OpenWeatherMap API key in script.js");
+        return;
     }
-    return { risk, message };
+
+    const districtOptions = Array.from(districtSelect.options);
+    const promises = districtOptions.map(option => getSingleDistrictData(option.value));
+    
+    // Wait for all API calls to complete
+    const results = await Promise.allSettled(promises);
+
+    allDistrictsData = results
+        .filter(result => result.status === 'fulfilled' && result.value)
+        .map(result => result.value);
+
+    updateSummaryLists();
+    updateDetailedView(districtSelect.value); // Show details for the initially selected district
 }
+
+async function getSingleDistrictData(districtName) {
+    let apiDistrictName = districtName;
+    if (districtName === "Dharashiv") apiDistrictName = "Osmanabad";
+    else if (districtName === "Chhatrapati Sambhajinagar") apiDistrictName = "Aurangabad";
+    else if (districtName === "Mumbai City" || districtName === "Mumbai Suburban") apiDistrictName = "Mumbai";
+
+    const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${apiDistrictName}&appid=${API_KEY}&units=metric`);
+    if (!response.ok) {
+        throw new Error(`Failed for ${districtName}`);
+    }
+    const data = await response.json();
+    const risk = getRiskLevel(data);
+    return { name: districtName, risk: risk, data: data };
+}
+
 
 // --- UI UPDATE FUNCTIONS ---
-function updateAIStatus({ risk, message }) {
-    aiStatus.textContent = `Status: ${risk}. ${message}`;
-    aiStatus.className = 'p-4 rounded-lg text-white mb-6'; // Reset classes
-    if (risk === "Danger") aiStatus.classList.add('bg-red-600');
-    else if (risk === "High Risk") aiStatus.classList.add('bg-yellow-500');
-    else if (risk === "Moderate Risk") aiStatus.classList.add('bg-blue-500');
-    else aiStatus.classList.add('bg-green-500');
+function updateSummaryLists() {
+    const dangerDistricts = [];
+    const warningDistricts = [];
+    const normalDistricts = [];
+
+    allDistrictsData.forEach(district => {
+        if (district.risk.level === 'danger') dangerDistricts.push(district.name);
+        else if (district.risk.level === 'warning') warningDistricts.push(district.name);
+        else normalDistricts.push(district.name);
+    });
+
+    dangerListEl.innerHTML = dangerDistricts.length ? dangerDistricts.map(d => `<li>${d}</li>`).join('') : '<li>None</li>';
+    warningListEl.innerHTML = warningDistricts.length ? warningDistricts.map(d => `<li>${d}</li>`).join('') : '<li>None</li>';
+    normalListEl.innerHTML = normalDistricts.length ? normalDistricts.map(d => `<li>${d}</li>`).join('') : '<li>None</li>';
 }
 
-function updateCurrentConditions(temp, humidity, rain) {
-    tempValue.textContent = `${temp.toFixed(1)} °C`;
-    humidityValue.textContent = `${humidity.toFixed(0)}%`;
-    rainfallValue.textContent = `${rain.toFixed(1)} mm`;
-}
-
-function updateMap(lat, lon) {
-    if (map) {
-        map.eachLayer(layer => {
-            if (layer instanceof L.Marker) map.removeLayer(layer);
-        });
-        map.setView([lat, lon], 10);
-    } else {
-        map = L.map('map').setView([lat, lon], 10);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+function updateDetailedView(districtName) {
+    const district = allDistrictsData.find(d => d.name === districtName);
+    if (!district) {
+        console.error("No data found for", districtName);
+        return;
     }
-    L.marker([lat, lon]).addTo(map);
+
+    const { data, risk } = district;
+    
+    detailsTitle.textContent = `Detailed View for ${districtName}`;
+    updateRiskAssessment(risk);
+    updateCurrentConditions(data);
+    updateMap(data.city.coord.lat, data.city.coord.lon, risk.level);
+    updateForecastChart(data.list);
+    updateLegends();
 }
 
-function updateChart(forecastList) {
-    const ctx = document.getElementById('forecastChart').getContext('2d');
-    const labels = forecastList.map(item => new Date(item.dt * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
-    const data = forecastList.map(item => item.rain ? item.rain['3h'] : 0);
-    
+function getRiskLevel(data) {
+    const forecast = data.list;
+    let maxRain = 0;
+    for (let i = 0; i < 8 && i < forecast.length; i++) {
+        const rain3h = forecast[i].rain?.['3h'] || 0;
+        if (rain3h > maxRain) maxRain = rain3h;
+    }
+    if (maxRain > 10) return { level: 'danger', value: maxRain };
+    if (maxRain > 5) return { level: 'warning', value: maxRain };
+    return { level: 'normal', value: maxRain };
+}
+
+function updateRiskAssessment(risk) {
+    riskAssessmentEl.className = 'risk-assessment'; // Reset
+    if (risk.level === 'danger') {
+        riskAssessmentEl.textContent = `Status: Danger! Predicted rainfall of ${risk.value.toFixed(2)} mm is high. Potential flood risk.`;
+        riskAssessmentEl.classList.add('danger');
+    } else if (risk.level === 'warning') {
+        riskAssessmentEl.textContent = `Status: Warning! Predicted rainfall of ${risk.value.toFixed(2)} mm is moderate. Monitor conditions.`;
+        riskAssessmentEl.classList.add('warning');
+    } else {
+        riskAssessmentEl.textContent = `Status: Normal. Conditions Normal. Predicted rainfall of ${risk.value.toFixed(2)} mm is within the safe limit.`;
+    }
+}
+
+function updateCurrentConditions(data) {
+    const currentData = data.list[0];
+    temperatureEl.textContent = `${currentData.main.temp.toFixed(1)} °C`;
+    humidityEl.textContent = `${currentData.main.humidity} %`;
+    rainfallEl.textContent = `${(currentData.rain?.['1h'] || 0).toFixed(1)} mm`;
+}
+
+function updateMap(lat, lon, riskLevel) {
+    if (!map) {
+        map = L.map(mapEl).setView([lat, lon], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+    } else {
+        map.setView([lat, lon], 10);
+    }
+    if (cityMarker) map.removeLayer(cityMarker);
+    let icon = riskLevel === 'danger' ? redIcon : riskLevel === 'warning' ? yellowIcon : greenIcon;
+    cityMarker = L.marker([lat, lon], { icon: icon }).addTo(map);
+}
+
+function updateForecastChart(forecastList) {
+    const labels = forecastList.map(item => {
+        const date = new Date(item.dt * 1000);
+        return [date.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit' }), date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })];
+    });
+    const data = forecastList.map(item => item.rain?.['3h'] || 0);
+
     if (forecastChart) {
         forecastChart.data.labels = labels;
         forecastChart.data.datasets[0].data = data;
         forecastChart.update();
     } else {
-        forecastChart = new Chart(ctx, {
+        forecastChart = new Chart(forecastCanvas, {
             type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Precipitation (mm per 3h)',
-                    data: data,
-                    backgroundColor: '#004b89',
-                }]
-            },
-            options: {
-                scales: { y: { beginAtZero: true } },
-                plugins: { legend: { display: false } }
-            }
+            data: { labels, datasets: [{ label: 'Precipitation (mm)', data, backgroundColor: 'rgba(0, 123, 255, 0.5)', borderColor: 'rgba(0, 123, 255, 1)', borderWidth: 1 }] },
+            options: { scales: { y: { beginAtZero: true } }, responsive: true, maintainAspectRatio: false }
         });
     }
 }
 
-// --- DATA FETCHING FUNCTION ---
-async function fetchOpenWeatherData(lat, lon) {
-    // CORRECTED LINE: This now checks for an empty string or a placeholder, which is correct.
-    if (!OWM_API_KEY || OWM_API_KEY === 'YOUR_API_KEY_HERE') { 
-        throw new Error('API key is missing. Please add your OpenWeatherMap API key to the script.js file.');
-    }
-    
-    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OWM_API_KEY}&units=metric`;
-    const response = await fetch(forecastUrl);
-    if (!response.ok) throw new Error(`Network response was not ok (${response.status})`);
-    const data = await response.json();
-
-    const currentConditions = data.list[0];
-    const forecastList = data.list;
-
-    const temp = currentConditions.main.temp;
-    const humidity = currentConditions.main.humidity;
-    const rain = currentConditions.rain ? currentConditions.rain['3h'] : 0;
-    const hourlyPrecipitation = forecastList.map(item => item.rain ? item.rain['3h'] : 0);
-
-    updateCurrentConditions(temp, humidity, rain);
-    updateChart(forecastList);
-    const aiResult = runAIFloodModel(hourlyPrecipitation);
-    updateAIStatus(aiResult);
+function updateLegends() {
+    mapLegendEl.innerHTML = `<div class="legend-item"><div class="legend-color" style="background-color: #dc3545;"></div> Danger</div><div class="legend-item"><div class="legend-color" style="background-color: #ffc107;"></div> Warning</div><div class="legend-item"><div class="legend-color" style="background-color: #28a745;"></div> Normal</div>`;
+    chartLegendEl.innerHTML = `<div class="legend-item"><div class="legend-color" style="background-color: #dc3545;"></div> Danger (> 10mm)</div><div class="legend-item"><div class="legend-color" style="background-color: #ffc107;"></div> Warning (> 5mm)</div><div class="legend-item"><div class="legend-color" style="background-color: #28a745;"></div> Normal (0-5mm)</div>`;
 }
 
-// --- MAIN APPLICATION LOGIC ---
-async function handleCityChange() {
-    const selectedCity = citySelect.value;
-    const { lat, lon } = cities[selectedCity];
+// --- EVENT LISTENERS ---
+districtSelect.addEventListener('change', () => {
+    updateDetailedView(districtSelect.value);
+});
 
-    dashboardTitle.textContent = `AI Risk Assessment for ${selectedCity}`;
-    cityInfo.textContent = `Displaying forecast for ${selectedCity}.`;
-    
-    mainDashboard.classList.add('hidden');
-    loader.classList.remove('hidden');
-    loader.style.display = 'flex';
-
-    try {
-        await fetchOpenWeatherData(lat, lon);
-        updateMap(lat, lon);
-    } catch (error) {
-        console.error('Failed to fetch weather data:', error);
-        alert(error.message);
-    } finally {
-        mainDashboard.classList.remove('hidden');
-        loader.classList.add('hidden');
-        loader.style.display = 'none';
-    }
-}
-
-// --- INITIALIZATION ---
-function init() {
-    for (const city in cities) {
-        const option = document.createElement('option');
-        option.value = city;
-        option.textContent = city;
-        citySelect.appendChild(option);
-    }
-    citySelect.value = "Pune";
-
-    citySelect.addEventListener('change', handleCityChange);
-    handleCityChange();
-}
-
-init();  
+// --- INITIAL LOAD ---
+window.addEventListener('load', () => {
+    fetchAndProcessAllDistricts();
+});
