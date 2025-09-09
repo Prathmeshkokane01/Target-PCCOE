@@ -98,24 +98,43 @@ h3:first-child { margin-top: 0; }
 .legend-item { display: flex; align-items: center; gap: 5px; }
 .legend-color { width: 15px; height: 15px; border-radius: 50%; }
 
-/* --- Responsive Design for Mobile --- */
+
+/* --- FINAL Responsive Design for Mobile --- */
 @media (max-width: 768px) {
+    /* Reset height to allow natural scrolling on mobile */
+    body, .container {
+        height: auto;
+        min-height: 100%;
+    }
+
+    /* Stack the main layout vertically */
     .container {
         flex-direction: column;
     }
+    
+    /* Ensure sidebar and main content take up full width correctly */
     .sidebar, .main-content {
         width: 100%;
         min-width: unset;
-        box-sizing: border-box; /* Ensures padding is included in the width */
+        box-sizing: border-box; /* Ensures padding doesn't break the layout */
     }
+
     .sidebar {
         border-right: none;
         border-bottom: 1px solid #dee2e6;
     }
-    .summary-container, .current-conditions, .charts-maps {
+
+    /* Use a simple and reliable vertical stack for all sections */
+    .summary-container,
+    .current-conditions,
+    .charts-maps {
         flex-direction: column;
     }
-    .summary-box, .card, .map-container, .forecast-container {
+
+    .summary-box,
+    .card,
+    .map-container,
+    .forecast-container {
         width: 100%;
     }
 }
