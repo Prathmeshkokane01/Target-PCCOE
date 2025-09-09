@@ -134,3 +134,43 @@ h3:first-child { margin-top: 0; }
 }
 .legend-item { display: flex; align-items: center; gap: 5px; }
 .legend-color { width: 15px; height: 15px; border-radius: 50%; }
+/* --- Responsive Design for Mobile --- */
+@media (max-width: 768px) {
+    /* Make the main layout stack vertically */
+    .container {
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+    }
+
+    /* Make sidebar and main content full-width */
+    .sidebar, .main-content {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .sidebar {
+        height: auto;
+        border-right: none; /* Remove side border */
+        border-bottom: 1px solid #dee2e6; /* Add bottom border */
+    }
+    
+    .main-content {
+        overflow-y: visible; /* Allow content to flow naturally */
+    }
+
+    /* Make inner containers stack vertically too */
+    .summary-container,
+    .current-conditions,
+    .charts-maps {
+        flex-direction: column;
+    }
+
+    /* Make all boxes and cards inside the containers full-width */
+    .summary-box,
+    .card,
+    .map-container,
+    .forecast-container {
+        width: 100%;
+    }
+}
