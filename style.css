@@ -3,20 +3,12 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #f0f2f5;
     margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
 }
 .container {
     display: flex;
-    width: 95%;
-    height: 95%;
-    max-width: 1500px;
+    width: 100%;
+    min-height: 100vh;
     background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
 }
 
 /* Sidebar Styling */
@@ -59,10 +51,7 @@ h3 { color: #495057; border-bottom: 2px solid #e9ecef; padding-bottom: 5px; marg
 h3:first-child { margin-top: 0; }
 
 /* Summary Section Styling */
-.summary-container {
-    display: flex;
-    gap: 20px;
-}
+.summary-container { display: flex; gap: 20px; }
 .summary-box {
     width: 33.3%;
     background-color: #f8f9fa;
@@ -74,21 +63,8 @@ h3:first-child { margin-top: 0; }
 .summary-box.danger-border { border-left-color: #dc3545; }
 .summary-box.warning-border { border-left-color: #ffc107; }
 .summary-box.normal-border { border-left-color: #28a745; }
-.summary-box h4 {
-    margin: 0 0 10px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1rem;
-}
-.summary-box ul {
-    list-style-type: none;
-    padding-left: 0;
-    margin: 0;
-    font-size: 0.9rem;
-    max-height: 100px;
-    overflow-y: auto;
-}
+.summary-box h4 { margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+.summary-box ul { list-style-type: none; padding-left: 0; margin: 0; font-size: 0.9rem; max-height: 100px; overflow-y: auto; }
 
 /* Detailed View Styling */
 .risk-assessment {
@@ -118,69 +94,28 @@ h3:first-child { margin-top: 0; }
 #forecast-chart { height: 300px !important; }
 
 /* Legend Styling */
-.legend {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 10px;
-    margin-top: 5px;
-    font-size: 0.8rem;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 5px;
-}
+.legend { display: flex; justify-content: center; gap: 20px; padding: 10px; margin-top: 5px; font-size: 0.8rem; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; }
 .legend-item { display: flex; align-items: center; gap: 5px; }
 .legend-color { width: 15px; height: 15px; border-radius: 50%; }
 
-
 /* --- Responsive Design for Mobile --- */
 @media (max-width: 768px) {
-    /* Make the main layout stack vertically */
     .container {
         flex-direction: column;
-        height: auto;
-        overflow-y: auto;
     }
-
-    /* Make sidebar and main content full-width */
     .sidebar, .main-content {
         width: 100%;
         min-width: unset;
+        box-sizing: border-box; /* Ensures padding is included in the width */
     }
-    
     .sidebar {
-        height: auto;
-        border-right: none; /* Remove side border */
-        border-bottom: 1px solid #dee2e6; /* Add bottom border */
+        border-right: none;
+        border-bottom: 1px solid #dee2e6;
     }
-    
-    .main-content {
-        overflow-y: visible; /* Allow content to flow naturally */
-    }
-
-    /* Make summary boxes wrap */
-    .summary-container {
-        flex-direction: row;  /* Keep boxes side-by-side */
-        flex-wrap: wrap;      /* Allow them to wrap to the next line if needed */
-        gap: 10px;            
-    }
-
-    .summary-box {
-        flex-basis: 150px; /* Give them a base size */
-        flex-grow: 1;      /* Allow them to grow and share space */
-        width: auto;       /* Override the desktop width */
-    }
-
-    /* Make inner containers for details stack vertically */
-    .current-conditions,
-    .charts-maps {
+    .summary-container, .current-conditions, .charts-maps {
         flex-direction: column;
     }
-
-    /* Make all boxes and cards inside the containers full-width */
-    .card,
-    .map-container,
-    .forecast-container {
+    .summary-box, .card, .map-container, .forecast-container {
         width: 100%;
     }
 }

@@ -4,11 +4,9 @@ const API_KEY = "5a4c5e3313bc10b8a4e086f4c09b522f"; // ⚠️ PASTE YOUR OWN API
 // --- DOM ELEMENTS ---
 const districtSelect = document.getElementById('district-select');
 const detailsTitle = document.getElementById('details-title');
-// Summary List Elements
 const dangerListEl = document.getElementById('danger-list');
 const warningListEl = document.getElementById('warning-list');
 const normalListEl = document.getElementById('normal-list');
-// Detailed View Elements
 const riskAssessmentEl = document.getElementById('risk-assessment');
 const temperatureEl = document.getElementById('temperature');
 const humidityEl = document.getElementById('humidity');
@@ -22,13 +20,12 @@ const chartLegendEl = document.getElementById('chart-legend');
 let map;
 let forecastChart;
 let cityMarker;
-let allDistrictsData = []; // To store data for all districts
+let allDistrictsData = [];
 
 // --- MAP MARKER ICONS ---
 const greenIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
 const yellowIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
 const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
-
 
 // --- CORE LOGIC ---
 async function fetchAndProcessAllDistricts() {
@@ -36,19 +33,14 @@ async function fetchAndProcessAllDistricts() {
         alert("Please enter your OpenWeatherMap API key in script.js");
         return;
     }
-
     const districtOptions = Array.from(districtSelect.options);
     const promises = districtOptions.map(option => getSingleDistrictData(option.value));
-    
-    // Wait for all API calls to complete
     const results = await Promise.allSettled(promises);
-
     allDistrictsData = results
         .filter(result => result.status === 'fulfilled' && result.value)
         .map(result => result.value);
-
     updateSummaryLists();
-    updateDetailedView(districtSelect.value); // Show details for the initially selected district
+    updateDetailedView(districtSelect.value);
 }
 
 async function getSingleDistrictData(districtName) {
@@ -56,29 +48,21 @@ async function getSingleDistrictData(districtName) {
     if (districtName === "Dharashiv") apiDistrictName = "Osmanabad";
     else if (districtName === "Chhatrapati Sambhajinagar") apiDistrictName = "Aurangabad";
     else if (districtName === "Mumbai City" || districtName === "Mumbai Suburban") apiDistrictName = "Mumbai";
-
     const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${apiDistrictName}&appid=${API_KEY}&units=metric`);
-    if (!response.ok) {
-        throw new Error(`Failed for ${districtName}`);
-    }
+    if (!response.ok) { throw new Error(`Failed for ${districtName}`); }
     const data = await response.json();
     const risk = getRiskLevel(data);
     return { name: districtName, risk: risk, data: data };
 }
 
-
 // --- UI UPDATE FUNCTIONS ---
 function updateSummaryLists() {
-    const dangerDistricts = [];
-    const warningDistricts = [];
-    const normalDistricts = [];
-
+    const dangerDistricts = [], warningDistricts = [], normalDistricts = [];
     allDistrictsData.forEach(district => {
         if (district.risk.level === 'danger') dangerDistricts.push(district.name);
         else if (district.risk.level === 'warning') warningDistricts.push(district.name);
         else normalDistricts.push(district.name);
     });
-
     dangerListEl.innerHTML = dangerDistricts.length ? dangerDistricts.map(d => `<li>${d}</li>`).join('') : '<li>None</li>';
     warningListEl.innerHTML = warningDistricts.length ? warningDistricts.map(d => `<li>${d}</li>`).join('') : '<li>None</li>';
     normalListEl.innerHTML = normalDistricts.length ? normalDistricts.map(d => `<li>${d}</li>`).join('') : '<li>None</li>';
@@ -86,13 +70,8 @@ function updateSummaryLists() {
 
 function updateDetailedView(districtName) {
     const district = allDistrictsData.find(d => d.name === districtName);
-    if (!district) {
-        console.error("No data found for", districtName);
-        return;
-    }
-
+    if (!district) { console.error("No data found for", districtName); return; }
     const { data, risk } = district;
-    
     detailsTitle.textContent = `Detailed View for ${districtName}`;
     updateRiskAssessment(risk);
     updateCurrentConditions(data);
@@ -102,10 +81,9 @@ function updateDetailedView(districtName) {
 }
 
 function getRiskLevel(data) {
-    const forecast = data.list;
     let maxRain = 0;
-    for (let i = 0; i < 8 && i < forecast.length; i++) {
-        const rain3h = forecast[i].rain?.['3h'] || 0;
+    for (let i = 0; i < 8 && i < data.list.length; i++) {
+        const rain3h = data.list[i].rain?.['3h'] || 0;
         if (rain3h > maxRain) maxRain = rain3h;
     }
     if (maxRain > 10) return { level: 'danger', value: maxRain };
@@ -114,7 +92,7 @@ function getRiskLevel(data) {
 }
 
 function updateRiskAssessment(risk) {
-    riskAssessmentEl.className = 'risk-assessment'; // Reset
+    riskAssessmentEl.className = 'risk-assessment';
     if (risk.level === 'danger') {
         riskAssessmentEl.textContent = `Status: Danger! Predicted rainfall of ${risk.value.toFixed(2)} mm is high. Potential flood risk.`;
         riskAssessmentEl.classList.add('danger');
@@ -151,7 +129,6 @@ function updateForecastChart(forecastList) {
         return [date.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit' }), date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })];
     });
     const data = forecastList.map(item => item.rain?.['3h'] || 0);
-
     if (forecastChart) {
         forecastChart.data.labels = labels;
         forecastChart.data.datasets[0].data = data;
