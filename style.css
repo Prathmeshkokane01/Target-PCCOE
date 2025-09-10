@@ -138,3 +138,12 @@ h3:first-child { margin-top: 0; }
         width: 100%;
     }
 }
+/* Style for the map layer control */
+.leaflet-control-layers-base label {
+    font-weight: normal; /* Prevents text from being bold */
+}
+/* Style for the map layer control to make it scrollable */
+.leaflet-control-layers-expanded {
+    max-height: 200px;
+    overflow-y: auto;
+}

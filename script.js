@@ -19,15 +19,10 @@ const chartLegendEl = document.getElementById('chart-legend');
 // --- APP STATE ---
 let map;
 let forecastChart;
-let cityMarker;
 let allDistrictsData = [];
+let districtMarker;
 
-// --- MAP MARKER ICONS ---
-const greenIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
-const yellowIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
-const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
-
-// --- CORE LOGIC ---
+// --- API FUNCTIONS ---
 async function fetchAndProcessAllDistricts() {
     if (API_KEY === "YOUR_API_KEY_HERE") {
         alert("Please enter your OpenWeatherMap API key in script.js");
@@ -75,7 +70,7 @@ function updateDetailedView(districtName) {
     detailsTitle.textContent = `Detailed View for ${districtName}`;
     updateRiskAssessment(risk);
     updateCurrentConditions(data);
-    updateMap(data.city.coord.lat, data.city.coord.lon, risk.level);
+    updateMap(data.city.coord.lat, data.city.coord.lon);
     updateForecastChart(data.list);
     updateLegends();
 }
@@ -111,16 +106,49 @@ function updateCurrentConditions(data) {
     rainfallEl.textContent = `${(currentData.rain?.['1h'] || 0).toFixed(1)} mm`;
 }
 
-function updateMap(lat, lon, riskLevel) {
+// --- UPDATED MAP FUNCTION ---
+function updateMap(lat, lon) {
+    const zoomLevel = 9;
+
     if (!map) {
-        map = L.map(mapEl).setView([lat, lon], 10);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+        // Initialize map only once
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        });
+
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        const radarLayer = L.tileLayer(`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${API_KEY}`);
+        const cloudsLayer = L.tileLayer(`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${API_KEY}`);
+        const windLayer = L.tileLayer(`https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${API_KEY}`);
+
+        map = L.map(mapEl, {
+            center: [lat, lon],
+            zoom: zoomLevel,
+            layers: [streetLayer] // Default layer
+        });
+
+        const baseMaps = {
+            "Street Map": streetLayer,
+            "Satellite": satelliteLayer
+        };
+        const overlayMaps = {
+            "Weather Radar": radarLayer,
+            "Clouds": cloudsLayer,
+            "Wind": windLayer
+        };
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+        
     } else {
-        map.setView([lat, lon], 10);
+        map.setView([lat, lon], zoomLevel);
     }
-    if (cityMarker) map.removeLayer(cityMarker);
-    let icon = riskLevel === 'danger' ? redIcon : riskLevel === 'warning' ? yellowIcon : greenIcon;
-    cityMarker = L.marker([lat, lon], { icon: icon }).addTo(map);
+
+    if (districtMarker) {
+        map.removeLayer(districtMarker);
+    }
+    districtMarker = L.marker([lat, lon]).addTo(map);
 }
 
 function updateForecastChart(forecastList) {
@@ -143,7 +171,8 @@ function updateForecastChart(forecastList) {
 }
 
 function updateLegends() {
-    mapLegendEl.innerHTML = `<div class="legend-item"><div class="legend-color" style="background-color: #dc3545;"></div> Danger</div><div class="legend-item"><div class="legend-color" style="background-color: #ffc107;"></div> Warning</div><div class="legend-item"><div class="legend-color" style="background-color: #28a745;"></div> Normal</div>`;
+    mapLegendEl.innerHTML = '';
+    mapLegendEl.style.display = 'none';
     chartLegendEl.innerHTML = `<div class="legend-item"><div class="legend-color" style="background-color: #dc3545;"></div> Danger (> 10mm)</div><div class="legend-item"><div class="legend-color" style="background-color: #ffc107;"></div> Warning (> 5mm)</div><div class="legend-item"><div class="legend-color" style="background-color: #28a745;"></div> Normal (0-5mm)</div>`;
 }
 
