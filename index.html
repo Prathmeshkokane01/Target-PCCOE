@@ -6,69 +6,89 @@
     <title>IN National Monsoon Watch</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2>IN National Monsoon Watch</h2>
-            <p class="subtitle">AI-Powered Flood & Drought Early Warning System</p>
-            <label for="district-select">Select a District</label>
-            <select id="district-select">
-                <option value="Ahmednagar">Ahmednagar</option>
-                <option value="Akola">Akola</option>
-                <option value="Amravati">Amravati</option>
-                <option value="Beed">Beed</option>
-                <option value="Bhandara">Bhandara</option>
-                <option value="Buldhana">Buldhana</option>
-                <option value="Chandrapur">Chandrapur</option>
-                <option value="Chhatrapati Sambhajinagar">Chhatrapati Sambhajinagar</option>
-                <option value="Dharashiv">Dharashiv</option>
-                <option value="Dhule">Dhule</option>
-                <option value="Gadchiroli">Gadchiroli</option>
-                <option value="Gondia">Gondia</option>
-                <option value="Hingoli">Hingoli</option>
-                <option value="Jalgaon">Jalgaon</option>
-                <option value="Jalna">Jalna</option>
-                <option value="Kolhapur">Kolhapur</option>
-                <option value="Latur">Latur</option>
-                <option value="Mumbai City">Mumbai City</option>
-                <option value="Mumbai Suburban">Mumbai Suburban</option>
-                <option value="Nagpur">Nagpur</option>
-                <option value="Nanded">Nanded</option>
-                <option value="Nandurbar">Nandurbar</option>
-                <option value="Nashik">Nashik</option>
-                <option value="Palghar">Palghar</option>
-                <option value="Parbhani">Parbhani</option>
-                <option value="Pune" selected>Pune</option>
-                <option value="Raigad">Raigad</option>
-                <option value="Ratnagiri">Ratnagiri</option>
-                <option value="Sangli">Sangli</option>
-                <option value="Satara">Satara</option>
-                <option value="Sindhudurg">Sindhudurg</option>
-                <option value="Solapur">Solapur</option>
-                <option value="Thane">Thane</option>
-                <option value="Wardha">Wardha</option>
-                <option value="Washim">Washim</option>
-                <option value="Yavatmal">Yavatmal</option>
-            </select>
+            <div class="sidebar-header">
+                <h2><i class="fas fa-cloud-sun-rain"></i> IN National Monsoon Watch</h2>
+                <p class="subtitle">AI-Powered Flood & Drought Early Warning System</p>
+            </div>
+
+            <div class="sidebar-controls">
+                <label for="district-select">Select a District</label>
+                <select id="district-select">
+                    <option value="Ahmednagar">Ahmednagar</option>
+                    <option value="Akola">Akola</option>
+                    <option value="Amravati">Amravati</option>
+                    <option value="Beed">Beed</option>
+                    <option value="Bhandara">Bhandara</option>
+                    <option value="Buldhana">Buldhana</option>
+                    <option value="Chandrapur">Chandrapur</option>
+                    <option value="Chhatrapati Sambhajinagar">Chhatrapati Sambhajinagar</option>
+                    <option value="Dharashiv">Dharashiv</option>
+                    <option value="Dhule">Dhule</option>
+                    <option value="Gadchiroli">Gadchiroli</option>
+                    <option value="Gondia">Gondia</option>
+                    <option value="Hingoli">Hingoli</option>
+                    <option value="Jalgaon">Jalgaon</option>
+                    <option value="Jalna">Jalna</option>
+                    <option value="Kolhapur">Kolhapur</option>
+                    <option value="Latur">Latur</option>
+                    <option value="Mumbai City">Mumbai City</option>
+                    <option value="Mumbai Suburban">Mumbai Suburban</option>
+                    <option value="Nagpur">Nagpur</option>
+                    <option value="Nanded">Nanded</option>
+                    <option value="Nandurbar">Nandurbar</option>
+                    <option value="Nashik">Nashik</option>
+                    <option value="Palghar">Palghar</option>
+                    <option value="Parbhani">Parbhani</option>
+                    <option value="Pune" selected>Pune</option>
+                    <option value="Raigad">Raigad</option>
+                    <option value="Ratnagiri">Ratnagiri</option>
+                    <option value="Sangli">Sangli</option>
+                    <option value="Satara">Satara</option>
+                    <option value="Sindhudurg">Sindhudurg</option>
+                    <option value="Solapur">Solapur</option>
+                    <option value="Thane">Thane</option>
+                    <option value="Wardha">Wardha</option>
+                    <option value="Washim">Washim</option>
+                    <option value="Yavatmal">Yavatmal</option>
+                </select>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h3><i class="fas fa-robot"></i> AI Weather Assistant</h3>
+                </div>
+                <div class="chat-box" id="chat-box">
+                    </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Ask about weather...">
+                    <button id="send-btn" aria-label="Send Message"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+
             <div class="about">
                 <h3>About</h3>
                 <p>This dashboard provides real-time weather data and AI-driven flood risk assessments based on precipitation forecasts.</p>
             </div>
         </div>
+
         <div class="main-content">
             <h3>District Risk Summary</h3>
             <div class="summary-container">
                 <div class="summary-box danger-border">
-                    <h4><span class="legend-color" style="background-color: #dc3545;"></span> Danger</h4>
+                    <h4><span class="legend-color danger-bg"></span> Danger</h4>
                     <ul id="danger-list"><li>Loading...</li></ul>
                 </div>
                 <div class="summary-box warning-border">
-                    <h4><span class="legend-color" style="background-color: #ffc107;"></span> Warning</h4>
+                    <h4><span class="legend-color warning-bg"></span> Warning</h4>
                     <ul id="warning-list"><li>Loading...</li></ul>
                 </div>
                 <div class="summary-box normal-border">
-                    <h4><span class="legend-color" style="background-color: #28a745;"></span> Normal</h4>
+                    <h4><span class="legend-color normal-bg"></span> Normal</h4>
                     <ul id="normal-list"><li>Loading...</li></ul>
                 </div>
             </div>
@@ -77,15 +97,15 @@
             <div class="risk-assessment" id="risk-assessment">Status: Loading...</div>
             <div class="current-conditions">
                 <div class="card">
-                    <h4>Temperature</h4>
+                    <h4><i class="fas fa-thermometer-half"></i> Temperature</h4>
                     <p id="temperature">--</p>
                 </div>
                 <div class="card">
-                    <h4>Humidity</h4>
+                    <h4><i class="fas fa-tint"></i> Humidity</h4>
                     <p id="humidity">--</p>
                 </div>
                 <div class="card">
-                    <h4>Rainfall (Last 1h)</h4>
+                    <h4><i class="fas fa-cloud-showers-heavy"></i> Rainfall (Last 1h)</h4>
                     <p id="rainfall">--</p>
                 </div>
             </div>
@@ -93,7 +113,6 @@
                 <div class="map-container">
                     <h3>Geographic Location</h3>
                     <div id="map"></div>
-                    <div id="map-legend" class="legend"></div>
                 </div>
                 <div class="forecast-container">
                     <h3>5-Day Precipitation Forecast (mm per 3h)</h3>
