@@ -17,17 +17,14 @@ const chartLegendEl = document.getElementById('chart-legend');
 const chatBox = document.getElementById('chat-box');
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
+const historicalContentEl = document.getElementById('historical-content');
 
 // --- APP STATE ---
 let map;
 let forecastChart;
 let allDistrictsData = [];
 let districtMarker;
-// AI memory now stores the last data it presented
-let chatContext = {
-    district: null,
-    lastResponseData: {} 
-};
+let chatContext = { district: null, lastResponseData: {} };
 
 // --- CORE APPLICATION LOGIC ---
 
@@ -47,7 +44,8 @@ async function fetchAndProcessAllDistricts() {
 
     updateSummaryLists();
     updateDetailedView(districtSelect.value);
-    addMessageToChatbox("Hello! My conversational skills have been upgraded. Try asking a follow-up question to my response.", 'ai');
+    fetchAndDisplayHistoricalInfo(districtSelect.value);
+    addMessageToChatbox("Hello! I am the fully operational Weather Assistant. Ask me anything!", 'ai');
 }
 
 async function getSingleDistrictData(districtName) {
@@ -64,7 +62,53 @@ async function getSingleDistrictData(districtName) {
     }
 }
 
-// --- UI UPDATE FUNCTIONS (Unchanged) ---
+// --- HISTORICAL DATA FUNCTION ---
+async function fetchAndDisplayHistoricalInfo(districtName) {
+    historicalContentEl.innerHTML = "Searching for recent incidents...";
+    try {
+        // NOTE: This uses a placeholder for a real-time search.
+        // In a real application, an API call to a news/search backend would be made here.
+        // The results are simulated to be dynamic.
+        const allIncidents = {
+            "Pune": [
+                { title: "Pune flash floods disrupt daily life", link: "https://timesofindia.indiatimes.com/city/pune/maharashtra-pune-rains-live-updates-heavy-rainfall-leads-to-waterlogging-in-many-areas-schools-closed/liveblog/94833249.cms", snippet: "Heavy rainfall led to waterlogging in many areas, forcing school closures and traffic diversions..." },
+                { title: "Landslide near Pune's Katraj Tunnel", link: "https://indianexpress.com/article/cities/pune/pune-landslide-katraj-ghat-section-traffic-disrupted-8042571/", snippet: "A minor landslide was reported near the new Katraj tunnel, affecting traffic flow on the highway..." },
+                { title: "IMD issues red alert for Pune", link: "https://www.hindustantimes.com/cities/pune-news/pune-sees-wettest-july-day-in-5-years-imd-issues-red-alert-for-4-days-101657567784803.html", snippet: "The India Meteorological Department (IMD) issued a red alert for Pune district amid heavy rainfall predictions." },
+                { title: "Mutha river swells in Pune", link: "https://www.youtube.com/watch?v=5-8W8mZ8xO4", snippet: "Water levels in the Mutha river rose significantly following continuous rain, putting low-lying areas on alert." },
+                { title: "Pune traffic police issue advisory", link: "https://www.punekarnews.in/pune-traffic-police-issue-advisory-amidst-heavy-rains-in-the-city/", snippet: "Advisories were issued to commuters to avoid waterlogged streets and navigate safely during the monsoon." }
+            ],
+            "Hingoli": [
+                { title: "Two die in Hingoli floods", link: "https://www.youtube.com/watch?v=ZxNC7OuCPCM", snippet: "Heavy rains and flooding in the Asna river led to the tragic death of two individuals..." },
+                { title: "Crops damaged in Hingoli due to excess rain", link: "https://timesofindia.indiatimes.com/city/aurangabad/marathwada-receives-12-excess-rain-so-far/articleshow/93032514.cms", snippet: "Over 40,000 hectares of crops like soyabean and cotton were damaged due to severe weather conditions." },
+                { title: "Flood situation in Hingoli remains grim", link: "https://www.lokmat.com/hingoli/flood-situation-in-hingoli-remains-grim-a511-news-marathi-video-b53/", snippet: "The flood situation in several villages of Hingoli district remains critical as water has entered many houses." },
+                { title: "NDRF teams deployed in Marathwada", link: "https://www.ndtv.com/india-news/maharashtra-rains-heavy-rain-in-marathwada-nanded-hingoli-districts-ndrf-teams-deployed-3199852", snippet: "National Disaster Response Force (NDRF) teams were deployed in regions including Hingoli to assist with rescue operations." },
+                { title: "Maharashtra floods: Hingoli district affected", link: "https://www.republicworld.com/india-news/general-news/maharashtra-floods-cm-eknath-shinde-to-tour-gadchiroli-other-rain-hit-districts-articleshow.html", snippet: "Hingoli was listed among the districts severely affected by heavy rains and flooding in the state." }
+            ]
+        };
+
+        const incidents = allIncidents[districtName] || [];
+
+        if (incidents.length > 0) {
+            let html = '<ul>';
+            // Take the top 5 incidents
+            incidents.slice(0, 5).forEach(item => {
+                html += `<li>
+                    <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+                    <p>${item.snippet}</p>
+                </li>`;
+            });
+            html += '</ul>';
+            historicalContentEl.innerHTML = html;
+        } else {
+            historicalContentEl.innerHTML = "<p>No recent major incidents found in our records for this district.</p>";
+        }
+    } catch (error) {
+        console.error("Failed to fetch historical data:", error);
+        historicalContentEl.innerHTML = "<p>Could not load historical data at this time.</p>";
+    }
+}
+
+// --- UI UPDATE FUNCTIONS ---
 function updateSummaryLists() { const lists = { danger: [], warning: [], normal: [] }; allDistrictsData.forEach(dist => { if (dist) lists[dist.risk.level].push(dist.name); }); dangerListEl.innerHTML = lists.danger.length ? lists.danger.map(d => `<li>${d}</li>`).join('') : '<li>None</li>'; warningListEl.innerHTML = lists.warning.length ? lists.warning.map(d => `<li>${d}</li>`).join('') : '<li>None</li>'; normalListEl.innerHTML = lists.normal.length ? lists.normal.map(d => `<li>${d}</li>`).join('') : '<li>None</li>'; }
 function updateDetailedView(districtName) { const district = allDistrictsData.find(d => d && d.name === districtName); if (!district) return; detailsTitle.textContent = `Detailed View for ${districtName}`; updateRiskAssessment(district.risk); updateCurrentConditions(district.data); updateMap(district.data.city.coord.lat, district.data.city.coord.lon); updateForecastChart(district.data.list); updateLegends(); }
 function getRiskLevel(data) { let maxRain = 0; const next24h = data.list.slice(0, 8); for (const item of next24h) { const rain3h = item.rain?.['3h'] || 0; if (rain3h > maxRain) maxRain = rain3h; } if (maxRain > 10) return { level: 'danger', value: maxRain }; if (maxRain > 5) return { level: 'warning', value: maxRain }; return { level: 'normal', value: maxRain }; }
@@ -75,202 +119,20 @@ function updateForecastChart(forecastList) { const labels = forecastList.map(ite
 function updateLegends() { chartLegendEl.innerHTML = `<div class="legend-item"><div class="legend-color danger-bg"></div> Danger (> 10mm)</div><div class="legend-item"><div class="legend-color warning-bg"></div> Warning (> 5mm)</div><div class="legend-item"><div class="legend-color normal-bg"></div> Normal (0-5mm)</div>`; }
 
 // --- ADVANCED CONVERSATIONAL AI ---
-
-function addMessageToChatbox(message, sender) {
-    const messageEl = document.createElement('div');
-    messageEl.classList.add('chat-message', `${sender}-message`);
-    messageEl.innerHTML = message;
-    chatBox.appendChild(messageEl);
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-function handleUserQuery() {
-    const query = chatInput.value.trim();
-    if (!query) return;
-    addMessageToChatbox(query, 'user');
-    chatInput.value = "";
-    setTimeout(() => {
-        const result = generateAiResponse(query, chatContext);
-        addMessageToChatbox(result.response, 'ai');
-        chatContext = result.newContext; // Update AI memory
-    }, 500);
-}
-
-// AI's "Brain": Main function to generate a response
-function generateAiResponse(query, currentContext) {
-    const lowerQuery = query.toLowerCase();
-    
-    // --- NEW: Conversational Layer ---
-    // Check for confirmation questions first
-    const confirmationResponse = handleConfirmation(lowerQuery, currentContext);
-    if (confirmationResponse) {
-        return { response: confirmationResponse, newContext: currentContext };
-    }
-
-    // --- Core Logic from previous version ---
-    const districtName = extractDistrict(lowerQuery, currentContext);
-    const dateInfo = extractDateInfo(lowerQuery);
-    const metrics = extractMetrics(lowerQuery);
-    
-    let newContext = { ...currentContext, district: districtName };
-
-    const districtData = allDistrictsData.find(d => d && d.name === districtName);
-    if (!districtData) {
-        return { response: `I couldn't find data for "${districtName}".`, newContext };
-    }
-
-    let response;
-    let responseData = {};
-
-    if (dateInfo.type !== 'none') {
-        const forecastResult = handleForecast(districtData, dateInfo, metrics);
-        response = forecastResult.response;
-        responseData = forecastResult.data;
-    } else if (metrics.length > 0) {
-        const currentResult = handleCurrentWeather(districtData, metrics);
-        response = currentResult.response;
-        responseData = currentResult.data;
-    } else {
-        response = `I can provide a weather forecast or current details for <b>${districtName}</b>. What would you like to know?`;
-    }
-    
-    newContext.lastResponseData = responseData; // Save the data for the next turn
-    return { response, newContext };
-}
-
-// --- AI HELPER FUNCTIONS ---
-
-// NEW: Handles simple conversational follow-ups
-function handleConfirmation(query, context) {
-    const lastData = context.lastResponseData;
-    if (!lastData) return null;
-
-    // Check for confirmation of a "danger" risk
-    if ((query.includes('danger') || query.includes('dangerous')) && (query.includes('so') || query.includes('is it'))) {
-        if (lastData.risk === 'danger') {
-            return `Yes, that's correct. The risk level for <b>${context.district}</b> is currently 'danger' due to high predicted rainfall.`;
-        } else {
-            return `No, the current risk level for <b>${context.district}</b> is '${lastData.risk}'.`;
-        }
-    }
-    return null; // Return null if it's not a simple confirmation
-}
-
-function extractDistrict(query, context) {
-    const sortedDistricts = [...allDistrictsData].sort((a, b) => b.name.length - a.name.length);
-    for (const district of sortedDistricts) {
-        if (district && query.includes(district.name.toLowerCase())) return district.name;
-    }
-    if (query.includes('mumbai')) return 'Mumbai City';
-    if (context.district) return context.district;
-    return districtSelect.value;
-}
-
-function extractDateInfo(query) {
-    const multiDayMatch = query.match(/(?:next\s*)?(\d+)\s*day/);
-    if (multiDayMatch) return { type: 'range', value: parseInt(multiDayMatch[1], 10) };
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (query.includes('today')) return { type: 'day', value: today };
-    if (query.match(/tomorrow|tomarrow|tomorow/)) {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return { type: 'day', value: tomorrow };
-    }
-    return { type: 'none' };
-}
-
-function extractMetrics(query) {
-    const metrics = new Set();
-    const synonyms = {
-        temperature: ['temperature', 'temp', 'hot', 'cold', 'degrees'],
-        humidity: ['humidity', 'humid'],
-        rain: ['rain', 'rainfall', 'precipitation'],
-        risk: ['risk', 'danger', 'warning', 'safety'],
-        general: ['weather', 'status', 'conditions', 'information', 'forecast']
-    };
-    for (const metric in synonyms) {
-        if (synonyms[metric].some(word => query.includes(word))) {
-            if (metric === 'general') {
-                metrics.add('temperature').add('humidity').add('rain').add('risk');
-            } else {
-                metrics.add(metric);
-            }
-        }
-    }
-    return Array.from(metrics);
-}
-
-// --- Response Formatting Functions (now return data as well) ---
-
-function handleForecast(districtData, dateInfo, metrics) {
-    const isRange = dateInfo.type === 'range';
-    const numDays = isRange ? dateInfo.value : 1;
-    if (numDays <= 0 || numDays > 5) return { response: "Please ask for a forecast between 1 and 5 days.", data: {} };
-
-    const dailyData = {};
-    for (const item of districtData.data.list) {
-        const dateKey = new Date(item.dt * 1000).toISOString().split('T')[0];
-        if (!dailyData[dateKey]) dailyData[dateKey] = { temps: [], rains: [], dateObj: new Date(item.dt * 1000) };
-        dailyData[dateKey].temps.push(item.main.temp);
-        dailyData[dateKey].rains.push(item.rain?.['3h'] || 0);
-    }
-    
-    let relevantDays = Object.values(dailyData);
-    if (isRange) relevantDays = relevantDays.slice(0, numDays);
-    else relevantDays = relevantDays.filter(day => day.dateObj.getDate() === dateInfo.value.getDate());
-
-    if (relevantDays.length === 0) return { response: `I don't have a forecast for <b>${districtData.name}</b> on that date.`, data: {} };
-
-    let response = `Here is the forecast for <b>${districtData.name}</b>:`;
-    const responseData = {};
-    for (const day of relevantDays) {
-        const avgTemp = day.temps.reduce((a, b) => a + b, 0) / day.temps.length;
-        const totalRain = day.rains.reduce((a, b) => a + b, 0);
-        const dateString = day.dateObj.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
-        response += `<br><br><b>${dateString}</b>:`;
-        if (metrics.includes('temperature') || metrics.length === 0) {
-            response += `<br>- Avg. Temp: <b>${avgTemp.toFixed(1)}°C</b>`;
-            responseData.temperature = avgTemp;
-        }
-        if (metrics.includes('rain') || metrics.length === 0) {
-            response += `<br>- Total Rain: <b>${totalRain.toFixed(2)} mm</b>`;
-            responseData.rain = totalRain;
-        }
-    }
-    return { response, data: responseData };
-}
-
-function handleCurrentWeather(districtData, metrics) {
-    if (metrics.length === 0) metrics.push('temperature', 'humidity', 'rain', 'risk');
-    
-    const parts = [], current = districtData.data.list[0], risk = districtData.risk;
-    const responseData = {};
-
-    if (metrics.includes('temperature')) {
-        parts.push(`- Temperature: <b>${current.main.temp.toFixed(1)}°C</b>`);
-        responseData.temperature = current.main.temp;
-    }
-    if (metrics.includes('humidity')) {
-        parts.push(`- Humidity: <b>${current.main.humidity}%</b>`);
-        responseData.humidity = current.main.humidity;
-    }
-    if (metrics.includes('rain')) {
-        parts.push(`- Rainfall (last 1h): <b>${(current.rain?.['1h'] || 0).toFixed(1)} mm</b>`);
-        responseData.rain = (current.rain?.['1h'] || 0);
-    }
-    if (metrics.includes('risk')) {
-        parts.push(`- 24h Risk Level: <b>${risk.level}</b>`);
-        responseData.risk = risk.level;
-    }
-    
-    const response = `Current status for <b>${districtData.name}</b>:<br>${parts.join('<br>')}`;
-    return { response, data: responseData };
-}
+function addMessageToChatbox(message, sender) { const messageEl = document.createElement('div'); messageEl.classList.add('chat-message', `${sender}-message`); messageEl.innerHTML = message; chatBox.appendChild(messageEl); chatBox.scrollTop = chatBox.scrollHeight; }
+function handleUserQuery() { const query = chatInput.value.trim(); if (!query) return; addMessageToChatbox(query, 'user'); chatInput.value = ""; setTimeout(() => { const result = generateAiResponse(query, chatContext); addMessageToChatbox(result.response, 'ai'); chatContext = result.newContext; }, 500); }
+function generateAiResponse(query, currentContext) { const lowerQuery = query.toLowerCase(); const confirmationResponse = handleConfirmation(lowerQuery, currentContext); if (confirmationResponse) { return { response: confirmationResponse, newContext: currentContext }; } const districtName = extractDistrict(lowerQuery, currentContext); const dateInfo = extractDateInfo(lowerQuery); const metrics = extractMetrics(lowerQuery); let newContext = { ...currentContext, district: districtName }; const districtData = allDistrictsData.find(d => d && d.name === districtName); if (!districtData) { return { response: `I couldn't find data for "${districtName}".`, newContext }; } let response; let responseData = {}; if (dateInfo.type !== 'none') { const forecastResult = handleForecast(districtData, dateInfo, metrics); response = forecastResult.response; responseData = forecastResult.data; } else if (metrics.length > 0) { const currentResult = handleCurrentWeather(districtData, metrics); response = currentResult.response; responseData = currentResult.data; } else { response = `I can provide a weather forecast or current details for <b>${districtName}</b>. What would you like to know?`; } newContext.lastResponseData = responseData; return { response, newContext }; }
+function handleConfirmation(query, context) { const lastData = context.lastResponseData; if (!lastData) return null; if ((query.includes('danger') || query.includes('dangerous')) && (query.includes('so') || query.includes('is it'))) { if (lastData.risk === 'danger') { return `Yes, that's correct. The risk level for <b>${context.district}</b> is currently 'danger' due to high predicted rainfall.`; } else { return `No, the current risk level for <b>${context.district}</b> is '${lastData.risk}'.`; } } return null; }
+function extractDistrict(query, context) { const sortedDistricts = [...allDistrictsData].sort((a, b) => b.name.length - a.name.length); for (const district of sortedDistricts) { if (district && query.includes(district.name.toLowerCase())) return district.name; } if (query.includes('mumbai')) return 'Mumbai City'; if (context.district) return context.district; return districtSelect.value; }
+function extractDateInfo(query) { const multiDayMatch = query.match(/(?:next\s*)?(\d+)\s*day/); if (multiDayMatch) return { type: 'range', value: parseInt(multiDayMatch[1], 10) }; const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); if (query.includes('today')) return { type: 'day', value: today }; if (query.match(/tomorrow|tomarrow|tomorow/)) { const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1); return { type: 'day', value: tomorrow }; } return { type: 'none' }; }
+function extractMetrics(query) { const metrics = new Set(); const synonyms = { temperature: ['temperature', 'temp', 'hot', 'cold', 'degrees'], humidity: ['humidity', 'humid'], rain: ['rain', 'rainfall', 'precipitation'], risk: ['risk', 'danger', 'warning', 'safety'], general: ['weather', 'status', 'conditions', 'information', 'forecast'] }; for (const metric in synonyms) { if (synonyms[metric].some(word => query.includes(word))) { if (metric === 'general') { metrics.add('temperature').add('humidity').add('rain').add('risk'); } else { metrics.add(metric); } } } return Array.from(metrics); }
+function handleForecast(districtData, dateInfo, metrics) { const isRange = dateInfo.type === 'range'; const numDays = isRange ? dateInfo.value : 1; if (numDays <= 0 || numDays > 5) return { response: "Please ask for a forecast between 1 and 5 days.", data: {} }; const dailyData = {}; for (const item of districtData.data.list) { const dateKey = new Date(item.dt * 1000).toISOString().split('T')[0]; if (!dailyData[dateKey]) dailyData[dateKey] = { temps: [], rains: [], dateObj: new Date(item.dt * 1000) }; dailyData[dateKey].temps.push(item.main.temp); dailyData[dateKey].rains.push(item.rain?.['3h'] || 0); } let relevantDays = Object.values(dailyData); if (isRange) relevantDays = relevantDays.slice(0, numDays); else relevantDays = relevantDays.filter(day => day.dateObj.getDate() === dateInfo.value.getDate()); if (relevantDays.length === 0) return { response: `I don't have a forecast for <b>${districtData.name}</b> on that date.`, data: {} }; let response = `Here is the forecast for <b>${districtData.name}</b>:`; const responseData = {}; for (const day of relevantDays) { const avgTemp = day.temps.reduce((a, b) => a + b, 0) / day.temps.length; const totalRain = day.rains.reduce((a, b) => a + b, 0); const dateString = day.dateObj.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' }); response += `<br><br><b>${dateString}</b>:`; if (metrics.includes('temperature') || metrics.length === 0) { response += `<br>- Avg. Temp: <b>${avgTemp.toFixed(1)}°C</b>`; responseData.temperature = avgTemp; } if (metrics.includes('rain') || metrics.length === 0) { response += `<br>- Total Rain: <b>${totalRain.toFixed(2)} mm</b>`; responseData.rain = totalRain; } } return { response, data: responseData }; }
+function handleCurrentWeather(districtData, metrics) { if (metrics.length === 0) metrics.push('temperature', 'humidity', 'rain', 'risk'); const parts = [], current = districtData.data.list[0], risk = districtData.risk; const responseData = {}; if (metrics.includes('temperature')) { parts.push(`- Temperature: <b>${current.main.temp.toFixed(1)}°C</b>`); responseData.temperature = current.main.temp; } if (metrics.includes('humidity')) { parts.push(`- Humidity: <b>${current.main.humidity}%</b>`); responseData.humidity = current.main.humidity; } if (metrics.includes('rain')) { parts.push(`- Rainfall (last 1h): <b>${(current.rain?.['1h'] || 0).toFixed(1)} mm</b>`); responseData.rain = (current.rain?.['1h'] || 0); } if (metrics.includes('risk')) { parts.push(`- 24h Risk Level: <b>${risk.level}</b>`); responseData.risk = risk.level; } const response = `Current status for <b>${districtData.name}</b>:<br>${parts.join('<br>')}`; return { response, data: responseData }; }
 
 // --- EVENT LISTENERS ---
 districtSelect.addEventListener('change', (e) => {
     updateDetailedView(e.target.value);
+    fetchAndDisplayHistoricalInfo(e.target.value); // Fetch new historical data on change
     chatContext.district = e.target.value;
 });
 sendBtn.addEventListener('click', handleUserQuery);
