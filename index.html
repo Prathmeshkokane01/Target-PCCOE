@@ -85,21 +85,22 @@
             <h3>District Risk Summary</h3>
             <div class="summary-container">
                 <div class="summary-box danger-border">
-                    <h4><span class="legend-color danger-bg"></span> Danger</h4>
+                    <h4><span class="legend-color danger-bg"></span> Red Zone</h4>
                     <ul id="danger-list"><li>Loading...</li></ul>
                 </div>
                 <div class="summary-box warning-border">
-                    <h4><span class="legend-color warning-bg"></span> Warning</h4>
+                    <h4><span class="legend-color warning-bg"></span> Yellow Zone</h4>
                     <ul id="warning-list"><li>Loading...</li></ul>
                 </div>
                 <div class="summary-box normal-border">
-                    <h4><span class="legend-color normal-bg"></span> Normal</h4>
+                    <h4><span class="legend-color normal-bg"></span> Green Zone</h4>
                     <ul id="normal-list"><li>Loading...</li></ul>
                 </div>
             </div>
             <hr>
             <h3 id="details-title">Detailed View for Pune</h3>
             <div class="risk-assessment" id="risk-assessment">Status: Loading...</div>
+            
             <div class="current-conditions">
                 <div class="card">
                     <h4><i class="fas fa-thermometer-half"></i> Temperature</h4>
@@ -110,10 +111,19 @@
                     <p id="humidity">--</p>
                 </div>
                 <div class="card">
-                    <h4><i class="fas fa-cloud-showers-heavy"></i> Rainfall (Last 1h)</h4>
+                    <h4><i class="fas fa-cloud-showers-heavy"></i> Current Rainfall</h4>
                     <p id="rainfall">--</p>
                 </div>
+                <div class="card">
+                    <h4><i class="fas fa-tachometer-alt"></i> Pressure</h4>
+                    <p id="pressure">--</p>
+                </div>
+                <div class="card">
+                    <h4><i class="fas fa-wind"></i> Wind Speed</h4>
+                    <p id="wind-speed">--</p>
+                </div>
             </div>
+
             <div class="charts-maps">
                 <div class="map-container">
                     <h3>Geographic Location</h3>
