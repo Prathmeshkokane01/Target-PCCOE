@@ -20,6 +20,8 @@ const chatBox = document.getElementById('chat-box');
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const historicalContentEl = document.getElementById('historical-content');
+const impactContentEl = document.getElementById('impact-content');
+const actionsContentEl = document.getElementById('actions-content');
 
 // --- APP STATE ---
 let map;
@@ -47,7 +49,7 @@ async function fetchAndProcessAllDistricts() {
     updateSummaryLists();
     updateDetailedView(districtSelect.value);
     fetchAndDisplayHistoricalInfo(districtSelect.value);
-    addMessageToChatbox("Hello! I now provide live data and explanations for all weather metrics.", 'ai');
+    addMessageToChatbox("Hello! I am an advanced AI that can predict weather impacts and suggest actions.", 'ai');
 }
 
 async function getForecastData(districtName) {
@@ -100,7 +102,9 @@ async function fetchAndDisplayHistoricalInfo(districtName) {
         const incidents = allIncidents[districtName] || [];
         if (incidents.length > 0) {
             let html = '<ul>';
-            incidents.slice(0, 5).forEach(item => { html += `<li><a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a><p>${item.snippet}</p></li>`; });
+            incidents.slice(0, 5).forEach(item => {
+                html += `<li><a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a><p>${item.snippet}</p></li>`;
+            });
             html += '</ul>';
             historicalContentEl.innerHTML = html;
         } else {
@@ -138,6 +142,9 @@ async function updateDetailedView(districtName) {
     updateMap(currentData.coord.lat, currentData.coord.lon);
     updateForecastChart(district.forecastData.list);
     updateLegends();
+    
+    updateImpactAnalysis(district);
+    updateRecommendedActions(district.risk);
 }
 
 function getRiskLevel(data) {
@@ -207,6 +214,50 @@ function updateLegends() {
     chartLegendEl.innerHTML = `<div class="legend-item"><div class="legend-color danger-bg"></div> Red Zone (> 10mm)</div><div class="legend-item"><div class="legend-color warning-bg"></div> Yellow Zone (> 5mm)</div><div class="legend-item"><div class="legend-color normal-bg"></div> Green Zone (0-5mm)</div>`;
 }
 
+// --- NEW: ADVANCED FEATURE FUNCTIONS ---
+function updateImpactAnalysis(district) {
+    const impacts = [];
+    const forecast = district.forecastData.list;
+    let totalRainNext48h = 0;
+    forecast.slice(0, 16).forEach(item => {
+        totalRainNext48h += item.rain?.['3h'] || 0;
+    });
+
+    if (district.risk.level === 'danger') {
+        impacts.push("<li>High risk of urban and riverine flooding.</li>");
+        impacts.push("<li>Potential for significant crop damage.</li>");
+        impacts.push("<li>Risk of disruptions to transport and power.</li>");
+    }
+    if (district.risk.level === 'warning') {
+        impacts.push("<li>Localized waterlogging possible in low-lying areas.</li>");
+        impacts.push("<li>Some crops may be at risk from excess water.</li>");
+    }
+    if (totalRainNext48h < 1) {
+        impacts.push("<li>Low rainfall may increase drought stress on crops.</li>");
+    }
+    if (impacts.length === 0) {
+        impacts.push("<li>No significant weather impacts expected.</li>");
+    }
+    impactContentEl.innerHTML = `<ul>${impacts.join('')}</ul>`;
+}
+
+function updateRecommendedActions(risk) {
+    const actions = [];
+    if (risk.level === 'danger') {
+        actions.push("<li><b>Alert:</b> Avoid travel if possible.</li>");
+        actions.push("<li>Check emergency supplies and secure property.</li>");
+        actions.push("<li>Monitor official advisories closely.</li>");
+    } else if (risk.level === 'warning') {
+        actions.push("<li><b>Advisory:</b> Be cautious of waterlogged roads.</li>");
+        actions.push("<li>Ensure drainage systems are clear.</li>");
+        actions.push("<li>Stay informed about weather updates.</li>");
+    } else {
+        actions.push("<li><b>All Clear:</b> Conditions are normal.</li>");
+        actions.push("<li>Continue with routine activities.</li>");
+    }
+    actionsContentEl.innerHTML = `<ul>${actions.join('')}</ul>`;
+}
+
 // --- ADVANCED CONVERSATIONAL AI ---
 function addMessageToChatbox(message, sender) {
     const messageEl = document.createElement('div');
@@ -231,6 +282,18 @@ function handleUserQuery() {
 
 async function generateAiResponse(query, currentContext) {
     const lowerQuery = query.toLowerCase();
+    
+    if (lowerQuery.includes('impact')) {
+        const districtName = extractDistrict(lowerQuery, currentContext);
+        const impactList = document.getElementById('impact-content').innerHTML;
+        return { response: `Here is the impact analysis for <b>${districtName}</b>:<br>${impactList}`, newContext: { ...currentContext, district: districtName } };
+    }
+    if (lowerQuery.includes('action') || lowerQuery.includes('should i do')) {
+        const districtName = extractDistrict(lowerQuery, currentContext);
+        const actionList = document.getElementById('actions-content').innerHTML;
+        return { response: `Here are the recommended actions for <b>${districtName}</b>:<br>${actionList}`, newContext: { ...currentContext, district: districtName } };
+    }
+
     const confirmationResponse = handleConfirmation(lowerQuery, currentContext);
     if (confirmationResponse) {
         return { response: confirmationResponse, newContext: currentContext };
@@ -254,7 +317,7 @@ async function generateAiResponse(query, currentContext) {
         response = currentResult.response;
         responseData = currentResult.data;
     } else {
-        response = `I can provide a weather forecast or current details for <b>${districtName}</b>. What would you like to know?`;
+        response = `I can provide a weather forecast, impact analysis, or recommended actions for <b>${districtName}</b>.`;
     }
     newContext.lastResponseData = responseData;
     return { response, newContext };
@@ -307,6 +370,8 @@ function extractMetrics(query) {
         risk: ['risk', 'danger', 'warning', 'red zone', 'yellow zone', 'green zone'],
         pressure: ['pressure'],
         wind: ['wind', 'windy'],
+        impact: ['impact', 'consequences'],
+        actions: ['actions', 'recommendations', 'should i do'],
         general: ['weather', 'status', 'conditions', 'information', 'forecast']
     };
     for (const metric in synonyms) {

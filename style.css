@@ -46,9 +46,10 @@ body {
 /* Shared Info Box Styling */
 .info-box {
     margin-top: 20px;
-    background-color: var(--medium-gray);
+    background-color: #fff;
     padding: 15px;
-    border-radius: 5px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 .info-box h3 {
     margin-top: 0;
@@ -60,9 +61,11 @@ body {
     border-bottom: none;
     margin-bottom: 10px;
 }
-.info-box p, .info-box div {
+.info-box p, .info-box div, .info-box ul {
     font-size: 0.9rem;
     color: var(--text-dark);
+    list-style-position: inside;
+    padding-left: 5px;
 }
 
 /* Main Content Styling */
@@ -125,10 +128,18 @@ h3:first-child { margin-top: 0; }
 #historical-content a { font-weight: bold; color: var(--primary); text-decoration: none; }
 #historical-content a:hover { text-decoration: underline; }
 #historical-content p { font-size: 0.85rem; margin-top: 4px; color: var(--dark-gray); }
-.insight { margin-bottom: 10px; border-left: 3px solid var(--primary); padding-left: 10px; }
-.insight:last-child { margin-bottom: 0; }
-.insight h4 { margin: 0 0 5px 0; font-size: 0.9rem; font-weight: bold; }
-.insight p { margin: 0 0 3px 0; }
+#impact-analysis, #recommended-actions {
+    border-left: 4px solid var(--primary);
+}
+#impact-content ul, #actions-content ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-left: 0;
+}
+#impact-content li, #actions-content li {
+    padding: 5px 0;
+}
+
 
 /* Responsive Design */
 @media (max-width: 1200px) {
