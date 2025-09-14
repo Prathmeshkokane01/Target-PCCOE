@@ -12,12 +12,19 @@
     <div class="container">
         <div class="sidebar">
             <div class="sidebar-header">
-                <h2><i class="fas fa-cloud-sun-rain"></i> IN National Monsoon Watch</h2>
-                <p class="subtitle">AI-Powered Decision Support System</p>
+                <div>
+                    <h2 data-translate="title">IN National Monsoon Watch</h2>
+                    <p class="subtitle" data-translate="subtitle">AI-Powered Decision Support System</p>
+                </div>
+                <select id="language-select" aria-label="Select Language">
+                    <option value="en">English</option>
+                    <option value="mr">मराठी</option>
+                    <option value="hi">हिन्दी</option>
+                </select>
             </div>
 
             <div class="sidebar-controls">
-                <label for="district-select">Select a District</label>
+                <label for="district-select" data-translate="select_district">Select a District</label>
                 <select id="district-select">
                     <option value="Ahmednagar">Ahmednagar</option>
                     <option value="Akola">Akola</option>
@@ -60,55 +67,55 @@
 
             <div class="chat-container">
                 <div class="chat-header">
-                    <h3><i class="fas fa-robot"></i> AI Weather Assistant</h3>
+                    <h3 data-translate="ai_assistant"><i class="fas fa-robot"></i> AI Weather Assistant</h3>
                 </div>
                 <div class="chat-box" id="chat-box">
                     </div>
                 <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Ask about weather or impact...">
+                    <input type="text" id="chat-input" placeholder="Ask about weather or impact..." data-translate-placeholder="ask_placeholder">
                     <button id="send-btn" aria-label="Send Message"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
 
             <div id="impact-analysis" class="info-box">
-                <h3><i class="fas fa-exclamation-triangle"></i> Impact Analysis</h3>
+                <h3 data-translate="impact_analysis"><i class="fas fa-exclamation-triangle"></i> Impact Analysis</h3>
                 <div id="impact-content">Loading...</div>
             </div>
 
             <div id="recommended-actions" class="info-box">
-                <h3><i class="fas fa-check-circle"></i> Recommended Actions</h3>
+                <h3 data-translate="recommended_actions"><i class="fas fa-check-circle"></i> Recommended Actions</h3>
                 <div id="actions-content">Loading...</div>
             </div>
-
+            
             <div id="crop-advisory" class="info-box">
-                <h3><i class="fas fa-seedling"></i> Crop-Specific Advisory</h3>
+                <h3 data-translate="crop_advisory"><i class="fas fa-seedling"></i> Crop-Specific Advisory</h3>
                 <div id="crop-content">Loading...</div>
             </div>
 
             <div id="soil-advisory" class="info-box">
-                <h3><i class="fas fa-mountain"></i> Soil & Planting Advisory</h3>
+                <h3 data-translate="soil_advisory"><i class="fas fa-mountain"></i> Soil & Planting Advisory</h3>
                 <div id="soil-content">Loading...</div>
             </div>
 
             <div id="historical-info" class="info-box">
-                <h3><i class="fas fa-history"></i> Historical Incidents</h3>
+                <h3 data-translate="historical_incidents"><i class="fas fa-history"></i> Historical Incidents</h3>
                 <div id="historical-content">Loading...</div>
             </div>
         </div>
 
         <div class="main-content">
-            <h3>District Risk Summary</h3>
+            <h3 data-translate="risk_summary">District Risk Summary</h3>
             <div class="summary-container">
                 <div class="summary-box danger-border">
-                    <h4><span class="legend-color danger-bg"></span> Red Zone</h4>
+                    <h4><span class="legend-color danger-bg"></span><span data-translate="red_zone">Red Zone</span></h4>
                     <ul id="danger-list"><li>Loading...</li></ul>
                 </div>
                 <div class="summary-box warning-border">
-                    <h4><span class="legend-color warning-bg"></span> Yellow Zone</h4>
+                    <h4><span class="legend-color warning-bg"></span><span data-translate="yellow_zone">Yellow Zone</span></h4>
                     <ul id="warning-list"><li>Loading...</li></ul>
                 </div>
                 <div class="summary-box normal-border">
-                    <h4><span class="legend-color normal-bg"></span> Green Zone</h4>
+                    <h4><span class="legend-color normal-bg"></span><span data-translate="green_zone">Green Zone</span></h4>
                     <ul id="normal-list"><li>Loading...</li></ul>
                 </div>
             </div>
@@ -118,34 +125,34 @@
             
             <div class="current-conditions">
                 <div class="card">
-                    <h4><i class="fas fa-thermometer-half"></i> Temperature</h4>
+                    <h4 data-translate="temperature"><i class="fas fa-thermometer-half"></i> Temperature</h4>
                     <p id="temperature">--</p>
                 </div>
                 <div class="card">
-                    <h4><i class="fas fa-tint"></i> Humidity</h4>
+                    <h4 data-translate="humidity"><i class="fas fa-tint"></i> Humidity</h4>
                     <p id="humidity">--</p>
                 </div>
                 <div class="card">
-                    <h4><i class="fas fa-cloud-showers-heavy"></i> Current Rainfall</h4>
+                    <h4 data-translate="current_rainfall"><i class="fas fa-cloud-showers-heavy"></i> Current Rainfall</h4>
                     <p id="rainfall">--</p>
                 </div>
                 <div class="card">
-                    <h4><i class="fas fa-tachometer-alt"></i> Pressure</h4>
+                    <h4 data-translate="pressure"><i class="fas fa-tachometer-alt"></i> Pressure</h4>
                     <p id="pressure">--</p>
                 </div>
                 <div class="card">
-                    <h4><i class="fas fa-wind"></i> Wind Speed</h4>
+                    <h4 data-translate="wind_speed"><i class="fas fa-wind"></i> Wind Speed</h4>
                     <p id="wind-speed">--</p>
                 </div>
             </div>
 
             <div class="charts-maps">
                 <div class="map-container">
-                    <h3>Geographic Location</h3>
+                    <h3 data-translate="geo_location">Geographic Location</h3>
                     <div id="map"></div>
                 </div>
                 <div class="forecast-container">
-                    <h3>5-Day Precipitation Forecast (mm per 3h)</h3>
+                    <h3 data-translate="precip_forecast">5-Day Precipitation Forecast (mm per 3h)</h3>
                     <canvas id="forecast-chart"></canvas>
                     <div id="chart-legend" class="legend"></div>
                 </div>

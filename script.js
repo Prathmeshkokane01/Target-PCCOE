@@ -2,6 +2,7 @@
 const API_KEY = "5a4c5e3313bc10b8a4e086f4c09b522f";
 
 // --- DOM ELEMENTS ---
+const languageSelect = document.getElementById('language-select');
 const districtSelect = document.getElementById('district-select');
 const detailsTitle = document.getElementById('details-title');
 const dangerListEl = document.getElementById('danger-list');
@@ -32,44 +33,132 @@ let allDistrictsData = [];
 let districtMarker;
 let chatContext = { district: null, lastResponseData: {} };
 
-// Coordinate mapping for all districts to ensure reliable data fetching
+// Coordinate mapping for all districts
 const DISTRICT_COORDINATES = {
-    "Ahmednagar": { "lat": 19.09, "lon": 74.74 },
-    "Akola": { "lat": 20.70, "lon": 77.01 },
-    "Amravati": { "lat": 20.93, "lon": 77.75 },
-    "Beed": { "lat": 18.99, "lon": 75.76 },
-    "Bhandara": { "lat": 21.17, "lon": 79.65 },
-    "Buldhana": { "lat": 20.53, "lon": 76.18 },
-    "Chandrapur": { "lat": 19.96, "lon": 79.29 },
-    "Chhatrapati Sambhajinagar": { "lat": 19.87, "lon": 75.34 },
-    "Dharashiv": { "lat": 18.17, "lon": 76.04 },
-    "Dhule": { "lat": 20.90, "lon": 74.77 },
-    "Gadchiroli": { "lat": 20.18, "lon": 80.00 },
-    "Gondia": { "lat": 21.46, "lon": 80.20 },
-    "Hingoli": { "lat": 19.71, "lon": 77.14 },
-    "Jalgaon": { "lat": 21.00, "lon": 75.56 },
-    "Jalna": { "lat": 19.83, "lon": 75.88 },
-    "Kolhapur": { "lat": 16.70, "lon": 74.24 },
-    "Latur": { "lat": 18.40, "lon": 76.58 },
-    "Mumbai City": { "lat": 19.07, "lon": 72.87 },
-    "Mumbai Suburban": { "lat": 19.11, "lon": 72.88 },
-    "Nagpur": { "lat": 21.14, "lon": 79.08 },
-    "Nanded": { "lat": 19.13, "lon": 77.32 },
-    "Nandurbar": { "lat": 21.36, "lon": 74.24 },
-    "Nashik": { "lat": 19.99, "lon": 73.78 },
-    "Palghar": { "lat": 19.69, "lon": 72.77 },
-    "Parbhani": { "lat": 19.26, "lon": 76.77 },
-    "Pune": { "lat": 18.52, "lon": 73.85 },
-    "Raigad": { "lat": 18.52, "lon": 73.18 },
-    "Ratnagiri": { "lat": 16.99, "lon": 73.31 },
-    "Sangli": { "lat": 16.85, "lon": 74.58 },
-    "Satara": { "lat": 17.68, "lon": 74.01 },
-    "Sindhudurg": { "lat": 16.35, "lon": 73.55 },
-    "Solapur": { "lat": 17.68, "lon": 75.90 },
-    "Thane": { "lat": 19.21, "lon": 72.97 },
-    "Wardha": { "lat": 20.74, "lon": 78.60 },
-    "Washim": { "lat": 20.10, "lon": 77.13 },
-    "Yavatmal": { "lat": 20.38, "lon": 78.12 }
+    "Ahmednagar": { "lat": 19.09, "lon": 74.74 }, "Akola": { "lat": 20.70, "lon": 77.01 }, "Amravati": { "lat": 20.93, "lon": 77.75 }, "Beed": { "lat": 18.99, "lon": 75.76 },
+    "Bhandara": { "lat": 21.17, "lon": 79.65 }, "Buldhana": { "lat": 20.53, "lon": 76.18 }, "Chandrapur": { "lat": 19.96, "lon": 79.29 }, "Chhatrapati Sambhajinagar": { "lat": 19.87, "lon": 75.34 },
+    "Dharashiv": { "lat": 18.17, "lon": 76.04 }, "Dhule": { "lat": 20.90, "lon": 74.77 }, "Gadchiroli": { "lat": 20.18, "lon": 80.00 }, "Gondia": { "lat": 21.46, "lon": 80.20 },
+    "Hingoli": { "lat": 19.71, "lon": 77.14 }, "Jalgaon": { "lat": 21.00, "lon": 75.56 }, "Jalna": { "lat": 19.83, "lon": 75.88 }, "Kolhapur": { "lat": 16.70, "lon": 74.24 },
+    "Latur": { "lat": 18.40, "lon": 76.58 }, "Mumbai City": { "lat": 19.07, "lon": 72.87 }, "Mumbai Suburban": { "lat": 19.11, "lon": 72.88 }, "Nagpur": { "lat": 21.14, "lon": 79.08 },
+    "Nanded": { "lat": 19.13, "lon": 77.32 }, "Nandurbar": { "lat": 21.36, "lon": 74.24 }, "Nashik": { "lat": 19.99, "lon": 73.78 }, "Palghar": { "lat": 19.69, "lon": 72.77 },
+    "Parbhani": { "lat": 19.26, "lon": 76.77 }, "Pune": { "lat": 18.52, "lon": 73.85 }, "Raigad": { "lat": 18.52, "lon": 73.18 }, "Ratnagiri": { "lat": 16.99, "lon": 73.31 },
+    "Sangli": { "lat": 16.85, "lon": 74.58 }, "Satara": { "lat": 17.68, "lon": 74.01 }, "Sindhudurg": { "lat": 16.35, "lon": 73.55 }, "Solapur": { "lat": 17.68, "lon": 75.90 },
+    "Thane": { "lat": 19.21, "lon": 72.97 }, "Wardha": { "lat": 20.74, "lon": 78.60 }, "Washim": { "lat": 20.10, "lon": 77.13 }, "Yavatmal": { "lat": 20.38, "lon": 78.12 }
+};
+
+// --- TRANSLATION DATA ---
+const translations = {
+    en: {
+        title: "IN National Monsoon Watch", subtitle: "AI-Powered Decision Support System", select_district: "Select a District",
+        ai_assistant: "AI Weather Assistant", ask_placeholder: "Ask about weather or impact...",
+        impact_analysis: "Impact Analysis", recommended_actions: "Recommended Actions", crop_advisory: "Crop-Specific Advisory",
+        soil_advisory: "Soil & Planting Advisory", historical_incidents: "Historical Incidents",
+        risk_summary: "District Risk Summary", red_zone: "Red Zone", yellow_zone: "Yellow Zone", green_zone: "Green Zone",
+        detailed_view: "Detailed View for", temperature: "Temperature", humidity: "Humidity", current_rainfall: "Current Rainfall",
+        pressure: "Pressure", wind_speed: "Wind Speed", geo_location: "Geographic Location", precip_forecast: "5-Day Precipitation Forecast (mm per 3h)",
+        loading: "Loading...", data_unavailable: "Data Unavailable", status: "Status",
+        ai_welcome: "Hello! I am a fully operational weather assistant with multilingual support. Ask me anything!",
+        status_red: "Status: Red Zone! Predicted rainfall of {value} mm is high.",
+        status_yellow: "Status: Yellow Zone! Predicted rainfall of {value} mm is moderate.",
+        status_green: "Status: Green Zone. Predicted rainfall of {value} mm is safe.",
+        districts: { "Ahmednagar": "Ahmednagar", "Akola": "Akola", "Amravati": "Amravati", "Beed": "Beed", "Bhandara": "Bhandara", "Buldhana": "Buldhana", "Chandrapur": "Chandrapur", "Chhatrapati Sambhajinagar": "Chhatrapati Sambhajinagar", "Dharashiv": "Dharashiv", "Dhule": "Dhule", "Gadchiroli": "Gadchiroli", "Gondia": "Gondia", "Hingoli": "Hingoli", "Jalgaon": "Jalgaon", "Jalna": "Jalna", "Kolhapur": "Kolhapur", "Latur": "Latur", "Mumbai City": "Mumbai City", "Mumbai Suburban": "Mumbai Suburban", "Nagpur": "Nagpur", "Nanded": "Nanded", "Nandurbar": "Nandurbar", "Nashik": "Nashik", "Palghar": "Palghar", "Parbhani": "Parbhani", "Pune": "Pune", "Raigad": "Raigad", "Ratnagiri": "Ratnagiri", "Sangli": "Sangli", "Satara": "Satara", "Sindhudurg": "Sindhudurg", "Solapur": "Solapur", "Thane": "Thane", "Wardha": "Wardha", "Washim": "Washim", "Yavatmal": "Yavatmal" },
+        impact_items: {
+            danger: ["<li>High risk of urban and riverine flooding.</li>", "<li>Potential for significant crop damage.</li>", "<li>Risk of disruptions to transport and power.</li>"],
+            warning: ["<li>Localized waterlogging possible in low-lying areas.</li>", "<li>Some crops may be at risk from excess water.</li>"],
+            drought: ["<li>Low rainfall may increase drought stress on crops.</li>"],
+            none: ["<li>No significant weather impacts expected.</li>"]
+        },
+        action_items: {
+            danger: ["<li><b>Alert:</b> Avoid travel if possible.</li>", "<li>Check emergency supplies and secure property.</li>", "<li>Monitor official advisories closely.</li>"],
+            warning: ["<li><b>Advisory:</b> Be cautious of waterlogged roads.</li>", "<li>Ensure drainage systems are clear.</li>", "<li>Stay informed about weather updates.</li>"],
+            normal: ["<li><b>All Clear:</b> Conditions are normal.</li>", "<li>Continue with routine activities.</li>"]
+        },
+        crop_items: {
+            rain_soon: "<li>Upcoming rain: Postpone irrigation, harvesting, and pesticide application.</li>",
+            danger: "<li>Ensure proper drainage in fields to prevent waterlogging of crops like soyabean and cotton.</li>",
+            dry_spell: "<li>Dry spell expected: Plan for irrigation to protect crops from moisture stress.</li>",
+            stable: "<li>Weather conditions are stable for general farm operations.</li>"
+        },
+        soil_items: {
+            temp: "<b>Avg. 5-Day Soil Temp (Est.):</b> {value}°C",
+            moisture: "<b>Avg. 5-Day Soil Moisture (Est.):</b> {value}%",
+            note: "<i>Note: These are estimations based on atmospheric conditions.</i>"
+        }
+    },
+    mr: {
+        title: "राष्ट्रीय मान्सून वॉच", subtitle: "AI-चालित निर्णय समर्थन प्रणाली", select_district: "जिल्हा निवडा",
+        ai_assistant: "AI हवामान सहाय्यक", ask_placeholder: "हवामान किंवा परिणामाबद्दल विचारा...",
+        impact_analysis: "परिणाम विश्लेषण", recommended_actions: "शिफारस केलेल्या कृती", crop_advisory: "पीक-विशिष्ट सल्ला",
+        soil_advisory: "माती आणि लागवड सल्ला", historical_incidents: "मागील घटना",
+        risk_summary: "जिल्हा जोखीम सारांश", red_zone: "रेड झोन", yellow_zone: "यलो झोन", green_zone: "ग्रीन झोन",
+        detailed_view: "साठी तपशीलवार दृश्य", temperature: "तापमान", humidity: "आर्द्रता", current_rainfall: "सध्याचा पाऊस",
+        pressure: "दाब", wind_speed: "वाऱ्याचा वेग", geo_location: "भौगोलिक स्थान", precip_forecast: "५-दिवसांचा पर्जन्यवृष्टी अंदाज (मिमी प्रति ३ तास)",
+        loading: "लोड होत आहे...", data_unavailable: "माहिती उपलब्ध नाही", status: "स्थिती",
+        ai_welcome: "नमस्कार! मी एक पूर्णपणे कार्यरत हवामान सहाय्यक आहे. मला काहीही विचारा.",
+        status_red: "स्थिती: रेड झोन! अंदाजित पाऊस {value} मिमी आहे.",
+        status_yellow: "स्थिती: यलो झोन! अंदाजित पाऊस {value} मिमी आहे.",
+        status_green: "स्थिती: ग्रीन झोन. अंदाजित पाऊस {value} मिमी सुरक्षित आहे.",
+        districts: { "Ahmednagar": "अहमदनगर", "Akola": "अकोला", "Amravati": "अमरावती", "Beed": "बीड", "Bhandara": "भंडारा", "Buldhana": "बुलढाणा", "Chandrapur": "चंद्रपूर", "Chhatrapati Sambhajinagar": "छत्रपती संभाजीनगर", "Dharashiv": "धाराशिव", "Dhule": "धुळे", "Gadchiroli": "गडचिरोली", "Gondia": "गोंदिया", "Hingoli": "हिंगोली", "Jalgaon": "जळगाव", "Jalna": "जालना", "Kolhapur": "कोल्हापूर", "Latur": "लातूर", "Mumbai City": "मुंबई शहर", "Mumbai Suburban": "मुंबई उपनगर", "Nagpur": "नागपूर", "Nanded": "नांदेड", "Nandurbar": "नंदुरबार", "Nashik": "नाशिक", "Palghar": "पालघर", "Parbhani": "परभणी", "Pune": "पुणे", "Raigad": "रायगड", "Ratnagiri": "रत्नागिरी", "Sangli": "सांगली", "Satara": "सातारा", "Sindhudurg": "सिंधुदुर्ग", "Solapur": "सोलापूर", "Thane": "ठाणे", "Wardha": "वर्धा", "Washim": "वाशिम", "Yavatmal": "यवतमाळ" },
+        impact_items: {
+            danger: ["<li>शहरी आणि नदीच्या पुराचा उच्च धोका.</li>", "<li>पिकांचे मोठे नुकसान होण्याची शक्यता.</li>", "<li>वाहतूक आणि वीजपुरवठ्यात व्यत्यय येण्याचा धोका.</li>"],
+            warning: ["<li>सखल भागात स्थानिक पाणी साचण्याची शक्यता.</li>", "<li>जास्त पाण्यामुळे काही पिके धोक्यात येऊ शकतात.</li>"],
+            drought: ["<li>कमी पावसामुळे पिकांवर दुष्काळाचा ताण वाढू शकतो.</li>"],
+            none: ["<li>कोणत्याही महत्त्वपूर्ण हवामान परिणामांची अपेक्षा नाही.</li>"]
+        },
+        action_items: {
+            danger: ["<li><b>इशारा:</b> शक्य असल्यास प्रवास टाळा.</li>", "<li>आपत्कालीन साहित्य तपासा आणि मालमत्ता सुरक्षित करा.</li>", "<li>अधिकृत सूचनांवर लक्ष ठेवा.</li>"],
+            warning: ["<li><b>सल्ला:</b> पाणी साचलेल्या रस्त्यांवर सावधगिरी बाळगा.</li>", "<li>पाणी वाहून नेणारे मार्ग मोकळे असल्याची खात्री करा.</li>", "<li>हवामान अपडेट्सबद्दल माहिती ठेवा.</li>"],
+            normal: ["<li><b>सर्व ठीक:</b> परिस्थिती सामान्य आहे.</li>", "<li>नियमित कामे सुरू ठेवा.</li>"]
+        },
+        crop_items: {
+            rain_soon: "<li>आगामी पाऊस: सिंचन, कापणी आणि कीटकनाशक फवारणी पुढे ढकला.</li>",
+            danger: "<li>सोयाबीन आणि कापूस यांसारख्या पिकांमध्ये पाणी साचू नये म्हणून शेतात योग्य निचरा सुनिश्चित करा.</li>",
+            dry_spell: "<li>कोरड्या हवामानाचा अंदाज: पिकांना ओलाव्याच्या ताणापासून वाचवण्यासाठी सिंचनाचे नियोजन करा.</li>",
+            stable: "<li>सर्वसाधारण शेती कामांसाठी हवामान स्थिर आहे.</li>"
+        },
+        soil_items: {
+            temp: "<b>सरासरी ५-दिवसांचे मातीचे तापमान (अंदाजे):</b> {value}°C",
+            moisture: "<b>सरासरी ५-दिवसांची मातीची आर्द्रता (अंदाजे):</b> {value}%",
+            note: "<i>टीप: हे वातावरणीय परिस्थितीवर आधारित अंदाज आहेत.</i>"
+        }
+    },
+    hi: {
+        title: "राष्ट्रीय मानसून वॉच", subtitle: "AI-संचालित निर्णय समर्थन प्रणाली", select_district: "जिला चुनें",
+        ai_assistant: "AI मौसम सहायक", ask_placeholder: "मौसम या प्रभाव के बारे में पूछें...",
+        impact_analysis: "प्रभाव विश्लेषण", recommended_actions: "अनुशंसित कार्रवाइयां", crop_advisory: "फसल-विशिष्ट सलाह",
+        soil_advisory: "मृदा और रोपण सलाह", historical_incidents: "पिछली घटनाएं",
+        risk_summary: "जिला जोखिम सारांश", red_zone: "रेड ज़ोन", yellow_zone: "येलो ज़ोन", green_zone: "ग्रीन ज़ोन",
+        detailed_view: "के लिए विस्तृत दृश्य", temperature: "तापमान", humidity: "आर्द्रता", current_rainfall: "वर्तमान वर्षा",
+        pressure: "दबाव", wind_speed: "हवा की गति", geo_location: "भौगोलिक स्थिति", precip_forecast: "५-दिन की वर्षा का पूर्वानुमान (मिमी प्रति ३ घंटे)",
+        loading: "लोड हो रहा है...", data_unavailable: "डेटा उपलब्ध नहीं है", status: "स्थिति",
+        ai_welcome: "नमस्ते! मैं एक पूरी तरह से काम करने वाला मौसम सहायक हूँ। मुझसे कुछ भी पूछें।",
+        status_red: "स्थिति: रेड ज़ोन! अनुमानित वर्षा {value} मिमी है।",
+        status_yellow: "स्थिति: येलो ज़ोन! अनुमानित वर्षा {value} मिमी है।",
+        status_green: "स्थिति: ग्रीन ज़ोन। अनुमानित वर्षा {value} मिमी सुरक्षित है।",
+        districts: { "Ahmednagar": "अहमदनगर", "Akola": "अकोला", "Amravati": "अमरावती", "Beed": "बीड", "Bhandara": "भंडारा", "Buldhana": "बुलढाणा", "Chandrapur": "चंद्रपुर", "Chhatrapati Sambhajinagar": "छत्रपति संभाजीनगर", "Dharashiv": "धाराशिव", "Dhule": "धुले", "Gadchiroli": "गढ़चिरौली", "Gondia": "गोंदिया", "Hingoli": "हिंगोली", "Jalgaon": "जलगांव", "Jalna": "जालना", "Kolhapur": "कोल्हापुर", "Latur": "लातूर", "Mumbai City": "मुंबई शहर", "Mumbai Suburban": "मुंबई उपनगरीय", "Nagpur": "नागपुर", "Nanded": "नांदेड़", "Nandurbar": "नंदुरबार", "Nashik": "नाशिक", "Palghar": "पालघर", "Parbhani": "परभणी", "Pune": "पुणे", "Raigad": "रायगढ़", "Ratnagiri": "रत्नागिरी", "Sangli": "सांगली", "Satara": "सतारा", "Sindhudurg": "सिंधुदुर्ग", "Solapur": "सोलापुर", "Thane": "ठाणे", "Wardha": "वर्धा", "Washim": "वाशिम", "Yavatmal": "यवतमाल" },
+        impact_items: {
+            danger: ["<li>शहरी और नदी में बाढ़ का उच्च जोखिम।</li>", "<li>फसलों को महत्वपूर्ण नुकसान की संभावना।</li>", "<li>परिवहन और बिजली में व्यवधान का खतरा।</li>"],
+            warning: ["<li>निचले इलाकों में स्थानीय जलभराव संभव है।</li>", "<li>अधिक पानी से कुछ फसलों को खतरा हो सकता है।</li>"],
+            drought: ["<li>कम वर्षा से फसलों पर सूखे का तनाव बढ़ सकता है।</li>"],
+            none: ["<li>किसी भी महत्वपूर्ण मौसम प्रभाव की उम्मीद नहीं है।</li>"]
+        },
+        action_items: {
+            danger: ["<li><b>चेतावनी:</b> यदि संभव हो तो यात्रा से बचें।</li>", "<li>आपातकालीन आपूर्ति की जांच करें और संपत्ति सुरक्षित करें।</li>", "<li>आधिकारिक सलाह की बारीकी से निगरानी करें।</li>"],
+            warning: ["<li><b>सलाह:</b> जलभराव वाली सड़कों से सावधान रहें।</li>", "<li>सुनिश्चित करें कि जल निकासी व्यवस्था साफ है।</li>", "<li>मौसम अपडेट से अवगत रहें।</li>"],
+            normal: ["<li><b>सब ठीक है:</b> स्थिति सामान्य है।</li>", "<li>नियमित गतिविधियां जारी रखें।</li>"]
+        },
+        crop_items: {
+            rain_soon: "<li>आगामी बारिश: सिंचाई, कटाई और कीटनाशक के प्रयोग को स्थगित करें।</li>",
+            danger: "<li>सोयाबीन और कपास जैसी फसलों में जलभराव को रोकने के लिए खेतों में उचित जल निकासी सुनिश्चित करें।</li>",
+            dry_spell: "<li>सूखे की उम्मीद: फसलों को नमी के तनाव से बचाने के लिए सिंचाई की योजना बनाएं।</li>",
+            stable: "<li>सामान्य कृषि कार्यों के लिए मौसम की स्थिति स्थिर है।</li>"
+        },
+        soil_items: {
+            temp: "<b>औसत ५-दिवसीय मृदा तापमान (अनुमानित):</b> {value}°C",
+            moisture: "<b>औसत ५-दिवसीय मृदा नमी (अनुमानित):</b> {value}%",
+            note: "<i>ध्यान दें: ये वायुमंडलीय स्थितियों पर आधारित अनुमान हैं।</i>"
+        }
+    }
 };
 
 // --- CORE APPLICATION LOGIC ---
@@ -88,10 +177,8 @@ async function fetchAndProcessAllDistricts() {
         return;
     }
 
-    updateSummaryLists();
-    updateDetailedView(districtSelect.value);
+    translatePage(languageSelect.value); // Initial translation also updates the view
     fetchAndDisplayHistoricalInfo(districtSelect.value);
-    addMessageToChatbox("Hello! I am an advanced AI that can predict weather impacts and suggest actions.", 'ai');
 }
 
 async function getForecastData(districtName) {
@@ -123,11 +210,11 @@ async function getCurrentWeatherData(districtName) {
 
 // --- HISTORICAL DATA FUNCTION ---
 async function fetchAndDisplayHistoricalInfo(districtName) {
-    historicalContentEl.innerHTML = "Searching for recent incidents...";
+    historicalContentEl.innerHTML = translations[languageSelect.value].loading || "Loading...";
     try {
         const allIncidents = {
-            "Pune": [ { title: "Pune flash floods disrupt daily life", link: "https://timesofindia.indiatimes.com/city/pune/maharashtra-pune-rains-live-updates-heavy-rainfall-leads-to-waterlogging-in-many-areas-schools-closed/liveblog/94833249.cms", snippet: "Heavy rainfall led to waterlogging in many areas, forcing school closures and traffic diversions..." }, { title: "Landslide near Pune's Katraj Tunnel", link: "https://indianexpress.com/article/cities/pune/pune-landslide-katraj-ghat-section-traffic-disrupted-8042571/", snippet: "A minor landslide was reported near the new Katraj tunnel, affecting traffic flow on the highway..." }, { title: "IMD issues red alert for Pune", link: "https://www.hindustantimes.com/cities/pune-news/pune-sees-wettest-july-day-in-5-years-imd-issues-red-alert-for-4-days-101657567784803.html", snippet: "The India Meteorological Department (IMD) issued a red alert for Pune district amid heavy rainfall predictions." }, { title: "Mutha river swells in Pune", link: "https://www.youtube.com/watch?v=5-8W8mZ8xO4", snippet: "Water levels in the Mutha river rose significantly following continuous rain, putting low-lying areas on alert." }, { title: "Pune traffic police issue advisory", link: "https://www.punekarnews.in/pune-traffic-police-issue-advisory-amidst-heavy-rains-in-the-city/", snippet: "Advisories were issued to commuters to avoid waterlogged streets and navigate safely during the monsoon." } ],
-            "Hingoli": [ { title: "Two die in Hingoli floods", link: "https://www.youtube.com/watch?v=ZxNC7OuCPCM", snippet: "Heavy rains and flooding in the Asna river led to the tragic death of two individuals..." }, { title: "Crops damaged in Hingoli due to excess rain", link: "https://timesofindia.indiatimes.com/city/aurangabad/marathwada-receives-12-excess-rain-so-far/articleshow/93032514.cms", snippet: "Over 40,000 hectares of crops like soyabean and cotton were damaged due to severe weather conditions." }, { title: "Flood situation in Hingoli remains grim", link: "https://www.lokmat.com/hingoli/flood-situation-in-hingoli-remains-grim-a511-news-marathi-video-b53/", snippet: "The flood situation in several villages of Hingoli district remains critical as water has entered many houses." }, { title: "NDRF teams deployed in Marathwada", link: "https://www.ndtv.com/india-news/maharashtra-rains-heavy-rain-in-marathwada-nanded-hingoli-districts-ndrf-teams-deployed-3199852", snippet: "National Disaster Response Force (NDRF) teams were deployed in regions including Hingoli to assist with rescue operations." }, { title: "Maharashtra floods: Hingoli district affected", link: "https://www.republicworld.com/india-news/general-news/maharashtra-floods-cm-eknath-shinde-to-tour-gadchiroli-other-rain-hit-districts-articleshow.html", snippet: "Hingoli was listed among the districts severely affected by heavy rains and flooding in the state." } ]
+            "Pune": [ { title: "Pune flash floods disrupt daily life (Oct 2022)", link: "https://timesofindia.indiatimes.com/city/pune/maharashtra-pune-rains-live-updates-heavy-rainfall-leads-to-waterlogging-in-many-areas-schools-closed/liveblog/94833249.cms", snippet: "Heavy rainfall led to waterlogging in many areas..." }, { title: "Landslide near Katraj Tunnel (Jul 2022)", link: "https://indianexpress.com/article/cities/pune/pune-landslide-katraj-ghat-section-traffic-disrupted-8042571/", snippet: "A minor landslide was reported, affecting traffic..." } ],
+            "Hingoli": [ { title: "Two die in Hingoli floods (Aug 2023)", link: "https://www.youtube.com/watch?v=ZxNC7OuCPCM", snippet: "Heavy rains and flooding in the Asna river..." }, { title: "Crops damaged in Hingoli (Jul 2022)", link: "https://timesofindia.indiatimes.com/city/aurangabad/marathwada-receives-12-excess-rain-so-far/articleshow/93032514.cms", snippet: "Over 40,000 hectares of crops were damaged..." } ]
         };
         const incidents = allIncidents[districtName] || [];
         if (incidents.length > 0) {
@@ -148,32 +235,34 @@ async function fetchAndDisplayHistoricalInfo(districtName) {
 
 // --- UI UPDATE FUNCTIONS ---
 function updateSummaryLists() {
+    const lang = languageSelect.value;
     const lists = { danger: [], warning: [], normal: [] };
     allDistrictsData.forEach(dist => {
         if (dist) lists[dist.risk.level].push(dist.name);
     });
-    dangerListEl.innerHTML = lists.danger.length ? lists.danger.map(d => `<li>${d}</li>`).join('') : '<li>None</li>';
-    warningListEl.innerHTML = lists.warning.length ? lists.warning.map(d => `<li>${d}</li>`).join('') : '<li>None</li>';
-    normalListEl.innerHTML = lists.normal.length ? lists.normal.map(d => `<li>${d}</li>`).join('') : '<li>None</li>';
+    dangerListEl.innerHTML = lists.danger.length ? lists.danger.map(d => `<li>${translations[lang].districts[d] || d}</li>`).join('') : `<li>-</li>`;
+    warningListEl.innerHTML = lists.warning.length ? lists.warning.map(d => `<li>${translations[lang].districts[d] || d}</li>`).join('') : `<li>-</li>`;
+    normalListEl.innerHTML = lists.normal.length ? lists.normal.map(d => `<li>${translations[lang].districts[d] || d}</li>`).join('') : `<li>-</li>`;
 }
 
 async function updateDetailedView(districtName) {
+    const lang = languageSelect.value;
     const district = allDistrictsData.find(d => d && d.name === districtName);
     const currentData = await getCurrentWeatherData(districtName);
     
     if (!district || !currentData) {
-        detailsTitle.textContent = `Could not load data for ${districtName}`;
-        riskAssessmentEl.textContent = "Status: Data Unavailable";
+        detailsTitle.textContent = `${translations[lang].data_unavailable} for ${translations[lang].districts[districtName] || districtName}`;
+        riskAssessmentEl.textContent = `${translations[lang].status}: ${translations[lang].data_unavailable}`;
         riskAssessmentEl.className = "risk-assessment";
         temperatureEl.textContent = "--";
         humidityEl.textContent = "--";
         rainfallEl.textContent = "--";
         pressureEl.textContent = "--";
         windSpeedEl.textContent = "--";
-        impactContentEl.innerHTML = "<p>Data unavailable.</p>";
-        actionsContentEl.innerHTML = "<p>Data unavailable.</p>";
-        cropContentEl.innerHTML = "<p>Data unavailable.</p>";
-        soilContentEl.innerHTML = "<p>Data unavailable.</p>";
+        impactContentEl.innerHTML = `<p>${translations[lang].data_unavailable}.</p>`;
+        actionsContentEl.innerHTML = `<p>${translations[lang].data_unavailable}.</p>`;
+        cropContentEl.innerHTML = `<p>${translations[lang].data_unavailable}.</p>`;
+        soilContentEl.innerHTML = `<p>${translations[lang].data_unavailable}.</p>`;
         if(map && districtMarker) {
             map.removeLayer(districtMarker);
             districtMarker = null;
@@ -181,7 +270,7 @@ async function updateDetailedView(districtName) {
         return;
     }
     
-    detailsTitle.textContent = `Detailed View for ${districtName}`;
+    detailsTitle.textContent = `${translations[lang].detailed_view} ${translations[lang].districts[districtName] || districtName}`;
     updateRiskAssessment(district.risk);
     updateCurrentConditions(currentData);
     updateMap(currentData.coord.lat, currentData.coord.lon);
@@ -207,15 +296,16 @@ function getRiskLevel(data) {
 }
 
 function updateRiskAssessment(risk) {
+    const lang = languageSelect.value;
     riskAssessmentEl.className = 'risk-assessment';
     if (risk.level === 'danger') {
-        riskAssessmentEl.textContent = `Status: Red Zone! Predicted rainfall of ${risk.value.toFixed(2)} mm is high.`;
+        riskAssessmentEl.textContent = translations[lang].status_red.replace('{value}', risk.value.toFixed(2));
         riskAssessmentEl.classList.add('danger');
     } else if (risk.level === 'warning') {
-        riskAssessmentEl.textContent = `Status: Yellow Zone! Predicted rainfall of ${risk.value.toFixed(2)} mm is moderate.`;
+        riskAssessmentEl.textContent = translations[lang].status_yellow.replace('{value}', risk.value.toFixed(2));
         riskAssessmentEl.classList.add('warning');
     } else {
-        riskAssessmentEl.textContent = `Status: Green Zone. Predicted rainfall of ${risk.value.toFixed(2)} mm is safe.`;
+        riskAssessmentEl.textContent = translations[lang].status_green.replace('{value}', risk.value.toFixed(2));
     }
 }
 
@@ -258,11 +348,13 @@ function updateForecastChart(forecastList) {
 }
 
 function updateLegends() {
-    chartLegendEl.innerHTML = `<div class="legend-item"><div class="legend-color danger-bg"></div> Red Zone (> 10mm)</div><div class="legend-item"><div class="legend-color warning-bg"></div> Yellow Zone (> 5mm)</div><div class="legend-item"><div class="legend-color normal-bg"></div> Green Zone (0-5mm)</div>`;
+    const lang = languageSelect.value;
+    chartLegendEl.innerHTML = `<div class="legend-item"><div class="legend-color danger-bg"></div> ${translations[lang].red_zone} (> 10mm)</div><div class="legend-item"><div class="legend-color warning-bg"></div> ${translations[lang].yellow_zone} (> 5mm)</div><div class="legend-item"><div class="legend-color normal-bg"></div> ${translations[lang].green_zone} (0-5mm)</div>`;
 }
 
 // --- ADVANCED FEATURE FUNCTIONS ---
 function updateImpactAnalysis(district) {
+    const lang = languageSelect.value;
     const impacts = [];
     const forecast = district.forecastData.list;
     let totalRainNext48h = 0;
@@ -270,82 +362,74 @@ function updateImpactAnalysis(district) {
         totalRainNext48h += item.rain?.['3h'] || 0;
     });
 
-    if (district.risk.level === 'danger') {
-        impacts.push("<li>High risk of urban and riverine flooding.</li>");
-        impacts.push("<li>Potential for significant crop damage.</li>");
-        impacts.push("<li>Risk of disruptions to transport and power.</li>");
-    }
-    if (district.risk.level === 'warning') {
-        impacts.push("<li>Localized waterlogging possible in low-lying areas.</li>");
-        impacts.push("<li>Some crops may be at risk from excess water.</li>");
-    }
-    if (totalRainNext48h < 1) {
-        impacts.push("<li>Low rainfall may increase drought stress on crops.</li>");
-    }
-    if (impacts.length === 0) {
-        impacts.push("<li>No significant weather impacts expected.</li>");
-    }
+    if (district.risk.level === 'danger') impacts.push(...translations[lang].impact_items.danger);
+    if (district.risk.level === 'warning') impacts.push(...translations[lang].impact_items.warning);
+    if (totalRainNext48h < 1) impacts.push(...translations[lang].impact_items.drought);
+    if (impacts.length === 0) impacts.push(...translations[lang].impact_items.none);
+    
     impactContentEl.innerHTML = `<ul>${impacts.join('')}</ul>`;
 }
 
 function updateRecommendedActions(risk) {
-    const actions = [];
-    if (risk.level === 'danger') {
-        actions.push("<li><b>Alert:</b> Avoid travel if possible.</li>");
-        actions.push("<li>Check emergency supplies and secure property.</li>");
-        actions.push("<li>Monitor official advisories closely.</li>");
-    } else if (risk.level === 'warning') {
-        actions.push("<li><b>Advisory:</b> Be cautious of waterlogged roads.</li>");
-        actions.push("<li>Ensure drainage systems are clear.</li>");
-        actions.push("<li>Stay informed about weather updates.</li>");
-    } else {
-        actions.push("<li><b>All Clear:</b> Conditions are normal.</li>");
-        actions.push("<li>Continue with routine activities.</li>");
-    }
+    const lang = languageSelect.value;
+    const actions = translations[lang].action_items[risk.level] || [];
     actionsContentEl.innerHTML = `<ul>${actions.join('')}</ul>`;
 }
 
 function updateCropAdvisory(district) {
+    const lang = languageSelect.value;
     const advisories = [];
     const forecast = district.forecastData.list;
     let willRainSoon = forecast.slice(0, 8).some(item => (item.rain?.['3h'] || 0) > 1);
     let willBeDry = forecast.slice(0, 16).every(item => (item.rain?.['3h'] || 0) < 0.5);
 
-    if (willRainSoon) {
-        advisories.push("<li>Upcoming rain: Postpone irrigation, harvesting, and pesticide application.</li>");
-    }
-    if (district.risk.level === 'danger') {
-        advisories.push("<li>Ensure proper drainage in fields to prevent waterlogging of crops like soyabean and cotton.</li>");
-    }
-    if (willBeDry) {
-        advisories.push("<li>Dry spell expected: Plan for irrigation to protect crops from moisture stress.</li>");
-    }
-    if (advisories.length === 0) {
-        advisories.push("<li>Weather conditions are stable for general farm operations.</li>");
-    }
+    if (willRainSoon) advisories.push(translations[lang].crop_items.rain_soon);
+    if (district.risk.level === 'danger') advisories.push(translations[lang].crop_items.danger);
+    if (willBeDry) advisories.push(translations[lang].crop_items.dry_spell);
+    if (advisories.length === 0) advisories.push(translations[lang].crop_items.stable);
+    
     cropContentEl.innerHTML = `<ul>${advisories.join('')}</ul>`;
 }
 
 function updateSoilAdvisory(district) {
+    const lang = languageSelect.value;
     const forecast = district.forecastData.list;
-    let avgSoilTemp = 0;
-    let avgSoilMoisture = 0;
-    
-    let totalTemp = 0;
-    let totalHumidity = 0;
-    forecast.forEach(item => {
-        totalTemp += item.main.temp;
-        totalHumidity += item.main.humidity;
-    });
-
-    avgSoilTemp = totalTemp / forecast.length;
-    avgSoilMoisture = totalHumidity / forecast.length;
+    let avgSoilTemp = forecast.reduce((sum, item) => sum + item.main.temp, 0) / forecast.length;
+    let avgSoilMoisture = forecast.reduce((sum, item) => sum + item.main.humidity, 0) / forecast.length;
 
     soilContentEl.innerHTML = `
-        <p><b>Avg. 5-Day Soil Temp (Est.):</b> ${avgSoilTemp.toFixed(1)}°C</p>
-        <p><b>Avg. 5-Day Soil Moisture (Est.):</b> ${avgSoilMoisture.toFixed(0)}%</p>
-        <p style="font-size: 0.8rem; margin-top: 5px;"><i>Note: These are estimations based on atmospheric conditions.</i></p>
+        <p>${translations[lang].soil_items.temp.replace('{value}', avgSoilTemp.toFixed(1))}</p>
+        <p>${translations[lang].soil_items.moisture.replace('{value}', avgSoilMoisture.toFixed(0))}</p>
+        <p style="font-size: 0.8rem; margin-top: 5px;">${translations[lang].soil_items.note}</p>
     `;
+}
+
+// --- TRANSLATION FUNCTION ---
+function translatePage(lang) {
+    document.querySelectorAll('[data-translate]').forEach(el => {
+        const key = el.getAttribute('data-translate');
+        if (translations[lang] && translations[lang][key]) {
+            const icon = el.querySelector('i');
+            const textSpan = el.querySelector('span');
+            if (icon && textSpan) {
+                 textSpan.textContent = translations[lang][key];
+            } else if (icon) {
+                el.innerHTML = `<i class="${icon.className}"></i> ${translations[lang][key]}`;
+            } else {
+                el.textContent = translations[lang][key];
+            }
+        }
+    });
+
+    document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-translate-placeholder');
+        if (translations[lang] && translations[lang][key]) {
+            el.placeholder = translations[lang][key];
+        }
+    });
+
+    updateSummaryLists();
+    updateDetailedView(districtSelect.value);
 }
 
 // --- ADVANCED CONVERSATIONAL AI ---
@@ -438,7 +522,7 @@ function handleConfirmation(query, context) {
 }
 
 function extractDistrict(query, context) {
-    const sortedDistricts = allDistrictsData.map(d => d.name).sort((a, b) => b.length - a.length);
+    const sortedDistricts = allDistrictsData.map(d => d.name).sort((a, b) => b.length - a.name.length);
     for (const district of sortedDistricts) {
         if (district && query.includes(district.toLowerCase())) return district;
     }
@@ -548,6 +632,7 @@ async function handleCurrentWeather(districtData, metrics) {
 }
 
 // --- EVENT LISTENERS ---
+languageSelect.addEventListener('change', (e) => translatePage(e.target.value));
 districtSelect.addEventListener('change', (e) => {
     updateDetailedView(e.target.value);
     fetchAndDisplayHistoricalInfo(e.target.value);

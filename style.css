@@ -37,8 +37,19 @@ body {
     box-sizing: border-box;
     overflow-y: auto;
 }
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
 .sidebar-header h2 { margin-top: 0; color: var(--text-dark); font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
 .sidebar-header .subtitle { font-size: 0.9rem; color: var(--dark-gray); margin-top: -10px; }
+#language-select {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background-color: #fff;
+}
 .sidebar-controls { margin-top: 20px; }
 .sidebar-controls label { font-weight: bold; color: var(--text-dark); }
 #district-select { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); font-size: 1rem; margin-top: 5px; }
