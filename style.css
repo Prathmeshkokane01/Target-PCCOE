@@ -122,24 +122,15 @@ h3:first-child { margin-top: 0; }
 #send-btn:hover { background-color: #0056b3; }
 
 /* Historical and Insights Styling */
-#historical-content ul { list-style-type: none; padding-left: 0; margin: 0; }
-#historical-content li { padding: 8px; border-bottom: 1px solid #dcdcdc; }
-#historical-content li:last-child { border-bottom: none; }
+#historical-content ul, #crop-content ul { list-style-type: none; padding-left: 0; margin: 0; }
+#historical-content li, #crop-content li { padding: 8px; border-bottom: 1px solid #dcdcdc; }
+#historical-content li:last-child, #crop-content li:last-child { border-bottom: none; }
 #historical-content a { font-weight: bold; color: var(--primary); text-decoration: none; }
 #historical-content a:hover { text-decoration: underline; }
 #historical-content p { font-size: 0.85rem; margin-top: 4px; color: var(--dark-gray); }
-#impact-analysis, #recommended-actions {
-    border-left: 4px solid var(--primary);
-}
-#impact-content ul, #actions-content ul {
-    list-style-type: none;
-    padding-left: 0;
-    margin-left: 0;
-}
-#impact-content li, #actions-content li {
-    padding: 5px 0;
-}
-
+#impact-analysis, #recommended-actions, #crop-advisory, #soil-advisory { border-left: 4px solid var(--primary); }
+#impact-content ul, #actions-content ul { list-style-type: none; padding-left: 0; margin-left: 0; }
+#impact-content li, #actions-content li { padding: 5px 0; }
 
 /* Responsive Design */
 @media (max-width: 1200px) {

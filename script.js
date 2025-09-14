@@ -22,6 +22,8 @@ const sendBtn = document.getElementById('send-btn');
 const historicalContentEl = document.getElementById('historical-content');
 const impactContentEl = document.getElementById('impact-content');
 const actionsContentEl = document.getElementById('actions-content');
+const cropContentEl = document.getElementById('crop-content');
+const soilContentEl = document.getElementById('soil-content');
 
 // --- APP STATE ---
 let map;
@@ -29,6 +31,46 @@ let forecastChart;
 let allDistrictsData = [];
 let districtMarker;
 let chatContext = { district: null, lastResponseData: {} };
+
+// Coordinate mapping for all districts to ensure reliable data fetching
+const DISTRICT_COORDINATES = {
+    "Ahmednagar": { "lat": 19.09, "lon": 74.74 },
+    "Akola": { "lat": 20.70, "lon": 77.01 },
+    "Amravati": { "lat": 20.93, "lon": 77.75 },
+    "Beed": { "lat": 18.99, "lon": 75.76 },
+    "Bhandara": { "lat": 21.17, "lon": 79.65 },
+    "Buldhana": { "lat": 20.53, "lon": 76.18 },
+    "Chandrapur": { "lat": 19.96, "lon": 79.29 },
+    "Chhatrapati Sambhajinagar": { "lat": 19.87, "lon": 75.34 },
+    "Dharashiv": { "lat": 18.17, "lon": 76.04 },
+    "Dhule": { "lat": 20.90, "lon": 74.77 },
+    "Gadchiroli": { "lat": 20.18, "lon": 80.00 },
+    "Gondia": { "lat": 21.46, "lon": 80.20 },
+    "Hingoli": { "lat": 19.71, "lon": 77.14 },
+    "Jalgaon": { "lat": 21.00, "lon": 75.56 },
+    "Jalna": { "lat": 19.83, "lon": 75.88 },
+    "Kolhapur": { "lat": 16.70, "lon": 74.24 },
+    "Latur": { "lat": 18.40, "lon": 76.58 },
+    "Mumbai City": { "lat": 19.07, "lon": 72.87 },
+    "Mumbai Suburban": { "lat": 19.11, "lon": 72.88 },
+    "Nagpur": { "lat": 21.14, "lon": 79.08 },
+    "Nanded": { "lat": 19.13, "lon": 77.32 },
+    "Nandurbar": { "lat": 21.36, "lon": 74.24 },
+    "Nashik": { "lat": 19.99, "lon": 73.78 },
+    "Palghar": { "lat": 19.69, "lon": 72.77 },
+    "Parbhani": { "lat": 19.26, "lon": 76.77 },
+    "Pune": { "lat": 18.52, "lon": 73.85 },
+    "Raigad": { "lat": 18.52, "lon": 73.18 },
+    "Ratnagiri": { "lat": 16.99, "lon": 73.31 },
+    "Sangli": { "lat": 16.85, "lon": 74.58 },
+    "Satara": { "lat": 17.68, "lon": 74.01 },
+    "Sindhudurg": { "lat": 16.35, "lon": 73.55 },
+    "Solapur": { "lat": 17.68, "lon": 75.90 },
+    "Thane": { "lat": 19.21, "lon": 72.97 },
+    "Wardha": { "lat": 20.74, "lon": 78.60 },
+    "Washim": { "lat": 20.10, "lon": 77.13 },
+    "Yavatmal": { "lat": 20.38, "lon": 78.12 }
+};
 
 // --- CORE APPLICATION LOGIC ---
 
@@ -53,10 +95,10 @@ async function fetchAndProcessAllDistricts() {
 }
 
 async function getForecastData(districtName) {
-    const districtApiMap = { "Dharashiv": "Osmanabad", "Chhatrapati Sambhajinagar": "Aurangabad", "Mumbai City": "Mumbai", "Mumbai Suburban": "Mumbai" };
-    const apiDistrictName = districtApiMap[districtName] || districtName;
+    const coords = DISTRICT_COORDINATES[districtName];
+    if (!coords) return null;
     try {
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${apiDistrictName}&appid=${API_KEY}&units=metric`);
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${coords.lat}&lon=${coords.lon}&appid=${API_KEY}&units=metric`);
         if (!response.ok) throw new Error(`API error for ${districtName}: ${response.statusText}`);
         const data = await response.json();
         return { name: districtName, risk: getRiskLevel(data), forecastData: data };
@@ -67,10 +109,10 @@ async function getForecastData(districtName) {
 }
 
 async function getCurrentWeatherData(districtName) {
-    const districtApiMap = { "Dharashiv": "Osmanabad", "Chhatrapati Sambhajinagar": "Aurangabad", "Mumbai City": "Mumbai", "Mumbai Suburban": "Mumbai" };
-    const apiDistrictName = districtApiMap[districtName] || districtName;
+    const coords = DISTRICT_COORDINATES[districtName];
+    if (!coords) return null;
     try {
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${apiDistrictName}&appid=${API_KEY}&units=metric`);
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${API_KEY}&units=metric`);
         if (!response.ok) throw new Error(`API error for ${districtName}: ${response.statusText}`);
         return await response.json();
     } catch (error) {
@@ -84,20 +126,8 @@ async function fetchAndDisplayHistoricalInfo(districtName) {
     historicalContentEl.innerHTML = "Searching for recent incidents...";
     try {
         const allIncidents = {
-            "Pune": [
-                { title: "Pune flash floods disrupt daily life", link: "https://timesofindia.indiatimes.com/city/pune/maharashtra-pune-rains-live-updates-heavy-rainfall-leads-to-waterlogging-in-many-areas-schools-closed/liveblog/94833249.cms", snippet: "Heavy rainfall led to waterlogging in many areas, forcing school closures and traffic diversions..." },
-                { title: "Landslide near Pune's Katraj Tunnel", link: "https://indianexpress.com/article/cities/pune/pune-landslide-katraj-ghat-section-traffic-disrupted-8042571/", snippet: "A minor landslide was reported near the new Katraj tunnel, affecting traffic flow on the highway..." },
-                { title: "IMD issues red alert for Pune", link: "https://www.hindustantimes.com/cities/pune-news/pune-sees-wettest-july-day-in-5-years-imd-issues-red-alert-for-4-days-101657567784803.html", snippet: "The India Meteorological Department (IMD) issued a red alert for Pune district amid heavy rainfall predictions." },
-                { title: "Mutha river swells in Pune", link: "https://www.youtube.com/watch?v=5-8W8mZ8xO4", snippet: "Water levels in the Mutha river rose significantly following continuous rain, putting low-lying areas on alert." },
-                { title: "Pune traffic police issue advisory", link: "https://www.punekarnews.in/pune-traffic-police-issue-advisory-amidst-heavy-rains-in-the-city/", snippet: "Advisories were issued to commuters to avoid waterlogged streets and navigate safely during the monsoon." }
-            ],
-            "Hingoli": [
-                { title: "Two die in Hingoli floods", link: "https://www.youtube.com/watch?v=ZxNC7OuCPCM", snippet: "Heavy rains and flooding in the Asna river led to the tragic death of two individuals..." },
-                { title: "Crops damaged in Hingoli due to excess rain", link: "https://timesofindia.indiatimes.com/city/aurangabad/marathwada-receives-12-excess-rain-so-far/articleshow/93032514.cms", snippet: "Over 40,000 hectares of crops like soyabean and cotton were damaged due to severe weather conditions." },
-                { title: "Flood situation in Hingoli remains grim", link: "https://www.lokmat.com/hingoli/flood-situation-in-hingoli-remains-grim-a511-news-marathi-video-b53/", snippet: "The flood situation in several villages of Hingoli district remains critical as water has entered many houses." },
-                { title: "NDRF teams deployed in Marathwada", link: "https://www.ndtv.com/india-news/maharashtra-rains-heavy-rain-in-marathwada-nanded-hingoli-districts-ndrf-teams-deployed-3199852", snippet: "National Disaster Response Force (NDRF) teams were deployed in regions including Hingoli to assist with rescue operations." },
-                { title: "Maharashtra floods: Hingoli district affected", link: "https://www.republicworld.com/india-news/general-news/maharashtra-floods-cm-eknath-shinde-to-tour-gadchiroli-other-rain-hit-districts-articleshow.html", snippet: "Hingoli was listed among the districts severely affected by heavy rains and flooding in the state." }
-            ]
+            "Pune": [ { title: "Pune flash floods disrupt daily life", link: "https://timesofindia.indiatimes.com/city/pune/maharashtra-pune-rains-live-updates-heavy-rainfall-leads-to-waterlogging-in-many-areas-schools-closed/liveblog/94833249.cms", snippet: "Heavy rainfall led to waterlogging in many areas, forcing school closures and traffic diversions..." }, { title: "Landslide near Pune's Katraj Tunnel", link: "https://indianexpress.com/article/cities/pune/pune-landslide-katraj-ghat-section-traffic-disrupted-8042571/", snippet: "A minor landslide was reported near the new Katraj tunnel, affecting traffic flow on the highway..." }, { title: "IMD issues red alert for Pune", link: "https://www.hindustantimes.com/cities/pune-news/pune-sees-wettest-july-day-in-5-years-imd-issues-red-alert-for-4-days-101657567784803.html", snippet: "The India Meteorological Department (IMD) issued a red alert for Pune district amid heavy rainfall predictions." }, { title: "Mutha river swells in Pune", link: "https://www.youtube.com/watch?v=5-8W8mZ8xO4", snippet: "Water levels in the Mutha river rose significantly following continuous rain, putting low-lying areas on alert." }, { title: "Pune traffic police issue advisory", link: "https://www.punekarnews.in/pune-traffic-police-issue-advisory-amidst-heavy-rains-in-the-city/", snippet: "Advisories were issued to commuters to avoid waterlogged streets and navigate safely during the monsoon." } ],
+            "Hingoli": [ { title: "Two die in Hingoli floods", link: "https://www.youtube.com/watch?v=ZxNC7OuCPCM", snippet: "Heavy rains and flooding in the Asna river led to the tragic death of two individuals..." }, { title: "Crops damaged in Hingoli due to excess rain", link: "https://timesofindia.indiatimes.com/city/aurangabad/marathwada-receives-12-excess-rain-so-far/articleshow/93032514.cms", snippet: "Over 40,000 hectares of crops like soyabean and cotton were damaged due to severe weather conditions." }, { title: "Flood situation in Hingoli remains grim", link: "https://www.lokmat.com/hingoli/flood-situation-in-hingoli-remains-grim-a511-news-marathi-video-b53/", snippet: "The flood situation in several villages of Hingoli district remains critical as water has entered many houses." }, { title: "NDRF teams deployed in Marathwada", link: "https://www.ndtv.com/india-news/maharashtra-rains-heavy-rain-in-marathwada-nanded-hingoli-districts-ndrf-teams-deployed-3199852", snippet: "National Disaster Response Force (NDRF) teams were deployed in regions including Hingoli to assist with rescue operations." }, { title: "Maharashtra floods: Hingoli district affected", link: "https://www.republicworld.com/india-news/general-news/maharashtra-floods-cm-eknath-shinde-to-tour-gadchiroli-other-rain-hit-districts-articleshow.html", snippet: "Hingoli was listed among the districts severely affected by heavy rains and flooding in the state." } ]
         };
         const incidents = allIncidents[districtName] || [];
         if (incidents.length > 0) {
@@ -133,6 +163,21 @@ async function updateDetailedView(districtName) {
     
     if (!district || !currentData) {
         detailsTitle.textContent = `Could not load data for ${districtName}`;
+        riskAssessmentEl.textContent = "Status: Data Unavailable";
+        riskAssessmentEl.className = "risk-assessment";
+        temperatureEl.textContent = "--";
+        humidityEl.textContent = "--";
+        rainfallEl.textContent = "--";
+        pressureEl.textContent = "--";
+        windSpeedEl.textContent = "--";
+        impactContentEl.innerHTML = "<p>Data unavailable.</p>";
+        actionsContentEl.innerHTML = "<p>Data unavailable.</p>";
+        cropContentEl.innerHTML = "<p>Data unavailable.</p>";
+        soilContentEl.innerHTML = "<p>Data unavailable.</p>";
+        if(map && districtMarker) {
+            map.removeLayer(districtMarker);
+            districtMarker = null;
+        }
         return;
     }
     
@@ -145,6 +190,8 @@ async function updateDetailedView(districtName) {
     
     updateImpactAnalysis(district);
     updateRecommendedActions(district.risk);
+    updateCropAdvisory(district);
+    updateSoilAdvisory(district);
 }
 
 function getRiskLevel(data) {
@@ -214,7 +261,7 @@ function updateLegends() {
     chartLegendEl.innerHTML = `<div class="legend-item"><div class="legend-color danger-bg"></div> Red Zone (> 10mm)</div><div class="legend-item"><div class="legend-color warning-bg"></div> Yellow Zone (> 5mm)</div><div class="legend-item"><div class="legend-color normal-bg"></div> Green Zone (0-5mm)</div>`;
 }
 
-// --- NEW: ADVANCED FEATURE FUNCTIONS ---
+// --- ADVANCED FEATURE FUNCTIONS ---
 function updateImpactAnalysis(district) {
     const impacts = [];
     const forecast = district.forecastData.list;
@@ -258,6 +305,49 @@ function updateRecommendedActions(risk) {
     actionsContentEl.innerHTML = `<ul>${actions.join('')}</ul>`;
 }
 
+function updateCropAdvisory(district) {
+    const advisories = [];
+    const forecast = district.forecastData.list;
+    let willRainSoon = forecast.slice(0, 8).some(item => (item.rain?.['3h'] || 0) > 1);
+    let willBeDry = forecast.slice(0, 16).every(item => (item.rain?.['3h'] || 0) < 0.5);
+
+    if (willRainSoon) {
+        advisories.push("<li>Upcoming rain: Postpone irrigation, harvesting, and pesticide application.</li>");
+    }
+    if (district.risk.level === 'danger') {
+        advisories.push("<li>Ensure proper drainage in fields to prevent waterlogging of crops like soyabean and cotton.</li>");
+    }
+    if (willBeDry) {
+        advisories.push("<li>Dry spell expected: Plan for irrigation to protect crops from moisture stress.</li>");
+    }
+    if (advisories.length === 0) {
+        advisories.push("<li>Weather conditions are stable for general farm operations.</li>");
+    }
+    cropContentEl.innerHTML = `<ul>${advisories.join('')}</ul>`;
+}
+
+function updateSoilAdvisory(district) {
+    const forecast = district.forecastData.list;
+    let avgSoilTemp = 0;
+    let avgSoilMoisture = 0;
+    
+    let totalTemp = 0;
+    let totalHumidity = 0;
+    forecast.forEach(item => {
+        totalTemp += item.main.temp;
+        totalHumidity += item.main.humidity;
+    });
+
+    avgSoilTemp = totalTemp / forecast.length;
+    avgSoilMoisture = totalHumidity / forecast.length;
+
+    soilContentEl.innerHTML = `
+        <p><b>Avg. 5-Day Soil Temp (Est.):</b> ${avgSoilTemp.toFixed(1)}°C</p>
+        <p><b>Avg. 5-Day Soil Moisture (Est.):</b> ${avgSoilMoisture.toFixed(0)}%</p>
+        <p style="font-size: 0.8rem; margin-top: 5px;"><i>Note: These are estimations based on atmospheric conditions.</i></p>
+    `;
+}
+
 // --- ADVANCED CONVERSATIONAL AI ---
 function addMessageToChatbox(message, sender) {
     const messageEl = document.createElement('div');
@@ -288,10 +378,20 @@ async function generateAiResponse(query, currentContext) {
         const impactList = document.getElementById('impact-content').innerHTML;
         return { response: `Here is the impact analysis for <b>${districtName}</b>:<br>${impactList}`, newContext: { ...currentContext, district: districtName } };
     }
-    if (lowerQuery.includes('action') || lowerQuery.includes('should i do')) {
+    if (lowerQuery.includes('action')) {
         const districtName = extractDistrict(lowerQuery, currentContext);
         const actionList = document.getElementById('actions-content').innerHTML;
         return { response: `Here are the recommended actions for <b>${districtName}</b>:<br>${actionList}`, newContext: { ...currentContext, district: districtName } };
+    }
+    if (lowerQuery.includes('crop') || lowerQuery.includes('farm') || lowerQuery.includes('agriculture')) {
+        const districtName = extractDistrict(lowerQuery, currentContext);
+        const cropList = document.getElementById('crop-content').innerHTML;
+        return { response: `Here is the agricultural advisory for <b>${districtName}</b>:<br>${cropList}`, newContext: { ...currentContext, district: districtName } };
+    }
+    if (lowerQuery.includes('soil')) {
+        const districtName = extractDistrict(lowerQuery, currentContext);
+        const soilList = document.getElementById('soil-content').innerHTML;
+        return { response: `Here is the soil and planting advisory for <b>${districtName}</b>:<br>${soilList}`, newContext: { ...currentContext, district: districtName } };
     }
 
     const confirmationResponse = handleConfirmation(lowerQuery, currentContext);
@@ -338,9 +438,9 @@ function handleConfirmation(query, context) {
 }
 
 function extractDistrict(query, context) {
-    const sortedDistricts = [...allDistrictsData].sort((a, b) => b.name.length - a.name.length);
+    const sortedDistricts = allDistrictsData.map(d => d.name).sort((a, b) => b.length - a.length);
     for (const district of sortedDistricts) {
-        if (district && query.includes(district.name.toLowerCase())) return district.name;
+        if (district && query.includes(district.toLowerCase())) return district;
     }
     if (query.includes('mumbai')) return 'Mumbai City';
     if (context.district) return context.district;
@@ -372,6 +472,8 @@ function extractMetrics(query) {
         wind: ['wind', 'windy'],
         impact: ['impact', 'consequences'],
         actions: ['actions', 'recommendations', 'should i do'],
+        crop: ['crop', 'farm', 'agriculture', 'advisory'],
+        soil: ['soil'],
         general: ['weather', 'status', 'conditions', 'information', 'forecast']
     };
     for (const metric in synonyms) {
@@ -429,7 +531,8 @@ async function handleCurrentWeather(districtData, metrics) {
     if (!current) {
         return { response: `Could not fetch live data for <b>${districtData.name}</b>.`, data: {} };
     }
-    const parts = [], risk = districtData.risk;
+    const parts = [],
+        risk = districtData.risk;
     const responseData = {};
     const riskZone = risk.level === 'danger' ? 'Red Zone' : risk.level === 'warning' ? 'Yellow Zone' : 'Green Zone';
 
