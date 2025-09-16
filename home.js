@@ -45,6 +45,7 @@ async function fetchLocations(query) {
         return;
     }
     loadingSpinner.style.display = 'block';
+    loadingSpinner.textContent = 'Searching...';
     searchResultsContainer.innerHTML = '';
 
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}, Maharashtra, India&format=json&limit=10`;
@@ -52,7 +53,7 @@ async function fetchLocations(query) {
     try {
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'IN-Monsoon-Watch-App/1.0 (prathmeshkokane01@gmail.com)' // It's good practice to add a real contact
+                'User-Agent': 'IN-Monsoon-Watch-App/1.0 (prathmeshkokane01@gmail.com)'
             }
         });
         if (!response.ok) throw new Error('Network response was not ok');
@@ -95,16 +96,17 @@ function redirectToDetails(lat, lon) {
     window.location.href = `details.html?lat=${lat}&lon=${lon}`;
 }
 
-// Get user's current location
+// Get user's current location - UPDATED
 function getCurrentLocation() {
     if (!navigator.geolocation) {
         alert("Geolocation is not supported by your browser.");
         return;
     }
     loadingSpinner.style.display = 'block';
+    loadingSpinner.textContent = 'Fetching current location...';
     const options = {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 30000, // Increased timeout to 30 seconds
         maximumAge: 0
     };
 
@@ -115,7 +117,13 @@ function getCurrentLocation() {
         },
         (err) => {
             loadingSpinner.style.display = 'none';
-            alert(`ERROR(${err.code}): ${err.message}\n\nPlease ensure location services are enabled for your browser and device.`);
+            let message = `Could not get your location.\nERROR(${err.code}): ${err.message}`;
+            if (err.code === 3) { // Timeout error
+                message = "Location request timed out. Please try again with a better network signal.";
+            } else if (err.code === 1) { // Permission denied
+                message = "You have denied location access. Please enable it in your browser settings.";
+            }
+            alert(message);
         },
         options
     );
@@ -125,7 +133,6 @@ function getCurrentLocation() {
 async function fetchDistrictSummaries() {
      if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
         console.error("API Key for OpenWeatherMap is not set in config.js");
-        alert("Please set your OpenWeatherMap API key in the config.js file.");
         return;
     }
     const lists = { danger: [], warning: [], normal: [] };
@@ -133,10 +140,7 @@ async function fetchDistrictSummaries() {
     const promises = Object.entries(DISTRICT_COORDINATES).map(async ([name, coords]) => {
         try {
             const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${coords.lat}&lon=${coords.lon}&appid=${API_KEY}&units=metric`);
-            if (!response.ok) {
-                console.error(`API Error for ${name}: ${response.statusText}`);
-                return null;
-            }
+            if (!response.ok) return null;
             const data = await response.json();
 
             let maxRain = 0;
