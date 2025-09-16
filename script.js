@@ -58,6 +58,9 @@ const translations = {
         pressure: "Pressure", wind_speed: "Wind Speed", geo_location: "Geographic Location", precip_forecast: "5-Day Precipitation Forecast (mm per 3h)",
         loading: "Loading...", data_unavailable: "Data Unavailable", status: "Status",
         ai_welcome: "Hello! I am a fully operational weather assistant with multilingual support. Ask me anything!",
+        ai_error: "I'm sorry, I encountered an error. Please try your question again.",
+        ai_fallback: "I can provide a weather forecast, impact analysis, or recommended actions for <b>{district}</b>.",
+        ai_greeting: "Hello! How can I help you with the weather today?",
         status_red: "Status: Red Zone! Predicted rainfall of {value} mm is high.",
         status_yellow: "Status: Yellow Zone! Predicted rainfall of {value} mm is moderate.",
         status_green: "Status: Green Zone. Predicted rainfall of {value} mm is safe.",
@@ -95,6 +98,9 @@ const translations = {
         pressure: "दाब", wind_speed: "वाऱ्याचा वेग", geo_location: "भौगोलिक स्थान", precip_forecast: "५-दिवसांचा पर्जन्यवृष्टी अंदाज (मिमी प्रति ३ तास)",
         loading: "लोड होत आहे...", data_unavailable: "माहिती उपलब्ध नाही", status: "स्थिती",
         ai_welcome: "नमस्कार! मी एक पूर्णपणे कार्यरत हवामान सहाय्यक आहे. मला काहीही विचारा.",
+        ai_error: "माफ करा, मला एक त्रुटी आली आहे. कृपया आपला प्रश्न पुन्हा प्रयत्न करा.",
+        ai_fallback: "मी <b>{district}</b> साठी हवामान अंदाज, परिणाम विश्लेषण किंवा शिफारस केलेल्या कृतींबद्दल माहिती देऊ शकेन.",
+        ai_greeting: "नमस्कार! आज मी तुम्हाला हवामानाबद्दल कशी मदत करू शकेन?",
         status_red: "स्थिती: रेड झोन! अंदाजित पाऊस {value} मिमी आहे.",
         status_yellow: "स्थिती: यलो झोन! अंदाजित पाऊस {value} मिमी आहे.",
         status_green: "स्थिती: ग्रीन झोन. अंदाजित पाऊस {value} मिमी सुरक्षित आहे.",
@@ -132,6 +138,9 @@ const translations = {
         pressure: "दबाव", wind_speed: "हवा की गति", geo_location: "भौगोलिक स्थिति", precip_forecast: "५-दिन की वर्षा का पूर्वानुमान (मिमी प्रति ३ घंटे)",
         loading: "लोड हो रहा है...", data_unavailable: "डेटा उपलब्ध नहीं है", status: "स्थिति",
         ai_welcome: "नमस्ते! मैं एक पूरी तरह से काम करने वाला मौसम सहायक हूँ। मुझसे कुछ भी पूछें।",
+        ai_error: "मुझे खेद है, मुझे एक त्रुटि का सामना करना पड़ा। कृपया अपना प्रश्न पुनः प्रयास करें।",
+        ai_fallback: "मैं <b>{district}</b> के लिए मौसम का पूर्वानुमान, प्रभाव विश्लेषण या अनुशंसित कार्रवाइयां प्रदान कर सकता हूं।",
+        ai_greeting: "नमस्ते! आज मैं मौसम के बारे में आपकी क्या मदद कर सकता हूँ?",
         status_red: "स्थिति: रेड ज़ोन! अनुमानित वर्षा {value} मिमी है।",
         status_yellow: "स्थिति: येलो ज़ोन! अनुमानित वर्षा {value} मिमी है।",
         status_green: "स्थिति: ग्रीन ज़ोन। अनुमानित वर्षा {value} मिमी सुरक्षित है।",
@@ -177,7 +186,7 @@ async function fetchAndProcessAllDistricts() {
         return;
     }
 
-    translatePage(languageSelect.value); // Initial translation also updates the view
+    translatePage(languageSelect.value);
     fetchAndDisplayHistoricalInfo(districtSelect.value);
 }
 
@@ -412,7 +421,7 @@ function translatePage(lang) {
             const icon = el.querySelector('i');
             const textSpan = el.querySelector('span');
             if (icon && textSpan) {
-                 textSpan.textContent = translations[lang][key];
+                 textSpan.textContent = " " + translations[lang][key];
             } else if (icon) {
                 el.innerHTML = `<i class="${icon.className}"></i> ${translations[lang][key]}`;
             } else {
@@ -430,6 +439,8 @@ function translatePage(lang) {
 
     updateSummaryLists();
     updateDetailedView(districtSelect.value);
+    chatBox.innerHTML = '';
+    addMessageToChatbox(translations[lang].ai_welcome, 'ai');
 }
 
 // --- ADVANCED CONVERSATIONAL AI ---
@@ -450,34 +461,46 @@ function handleUserQuery() {
         generateAiResponse(query, chatContext).then(result => {
             addMessageToChatbox(result.response, 'ai');
             chatContext = result.newContext;
+        }).catch(error => {
+            console.error("AI Response Error:", error);
+            addMessageToChatbox(translations[languageSelect.value].ai_error, 'ai');
         });
     }, 500);
 }
 
 async function generateAiResponse(query, currentContext) {
+    const lang = languageSelect.value;
     const lowerQuery = query.toLowerCase();
     
-    if (lowerQuery.includes('impact')) {
+    // Handle conversational greetings
+    const greetingWords = ['hi', 'hello', 'namaste', 'namaskar', 'hey'];
+    if (greetingWords.some(word => lowerQuery.startsWith(word))) {
+        return { response: translations[lang].ai_greeting, newContext: currentContext };
+    }
+    
+    // Handle specific panel queries
+    if (extractMetrics(lowerQuery).includes('impact')) {
         const districtName = extractDistrict(lowerQuery, currentContext);
         const impactList = document.getElementById('impact-content').innerHTML;
-        return { response: `Here is the impact analysis for <b>${districtName}</b>:<br>${impactList}`, newContext: { ...currentContext, district: districtName } };
+        return { response: `Here is the impact analysis for <b>${translations[lang].districts[districtName] || districtName}</b>:<br>${impactList}`, newContext: { ...currentContext, district: districtName } };
     }
-    if (lowerQuery.includes('action')) {
+    if (extractMetrics(lowerQuery).includes('actions')) {
         const districtName = extractDistrict(lowerQuery, currentContext);
         const actionList = document.getElementById('actions-content').innerHTML;
-        return { response: `Here are the recommended actions for <b>${districtName}</b>:<br>${actionList}`, newContext: { ...currentContext, district: districtName } };
+        return { response: `Here are the recommended actions for <b>${translations[lang].districts[districtName] || districtName}</b>:<br>${actionList}`, newContext: { ...currentContext, district: districtName } };
     }
-    if (lowerQuery.includes('crop') || lowerQuery.includes('farm') || lowerQuery.includes('agriculture')) {
+    if (extractMetrics(lowerQuery).includes('crop')) {
         const districtName = extractDistrict(lowerQuery, currentContext);
         const cropList = document.getElementById('crop-content').innerHTML;
-        return { response: `Here is the agricultural advisory for <b>${districtName}</b>:<br>${cropList}`, newContext: { ...currentContext, district: districtName } };
+        return { response: `Here is the agricultural advisory for <b>${translations[lang].districts[districtName] || districtName}</b>:<br>${cropList}`, newContext: { ...currentContext, district: districtName } };
     }
-    if (lowerQuery.includes('soil')) {
+    if (extractMetrics(lowerQuery).includes('soil')) {
         const districtName = extractDistrict(lowerQuery, currentContext);
         const soilList = document.getElementById('soil-content').innerHTML;
-        return { response: `Here is the soil and planting advisory for <b>${districtName}</b>:<br>${soilList}`, newContext: { ...currentContext, district: districtName } };
+        return { response: `Here is the soil and planting advisory for <b>${translations[lang].districts[districtName] || districtName}</b>:<br>${soilList}`, newContext: { ...currentContext, district: districtName } };
     }
 
+    // Handle data queries
     const confirmationResponse = handleConfirmation(lowerQuery, currentContext);
     if (confirmationResponse) {
         return { response: confirmationResponse, newContext: currentContext };
@@ -501,7 +524,7 @@ async function generateAiResponse(query, currentContext) {
         response = currentResult.response;
         responseData = currentResult.data;
     } else {
-        response = `I can provide a weather forecast, impact analysis, or recommended actions for <b>${districtName}</b>.`;
+        response = translations[lang].ai_fallback.replace('{district}', `<b>${translations[lang].districts[districtName] || districtName}</b>`);
     }
     newContext.lastResponseData = responseData;
     return { response, newContext };
