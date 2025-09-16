@@ -3,165 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IN National Monsoon Watch</title>
+    <title>IN National Monsoon Watch - Welcome</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
-    <div class="container">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div>
-                    <h2 data-translate="title">IN National Monsoon Watch</h2>
-                    <p class="subtitle" data-translate="subtitle">AI-Powered Decision Support System</p>
-                </div>
-                <select id="language-select" aria-label="Select Language">
-                    <option value="en">English</option>
-                    <option value="mr">मराठी</option>
-                    <option value="hi">हिन्दी</option>
-                </select>
-            </div>
-
-            <div class="sidebar-controls">
-                <label for="district-select" data-translate="select_district">Select a District</label>
-                <select id="district-select">
-                    <option value="Ahmednagar">Ahmednagar</option>
-                    <option value="Akola">Akola</option>
-                    <option value="Amravati">Amravati</option>
-                    <option value="Beed">Beed</option>
-                    <option value="Bhandara">Bhandara</option>
-                    <option value="Buldhana">Buldhana</option>
-                    <option value="Chandrapur">Chandrapur</option>
-                    <option value="Chhatrapati Sambhajinagar">Chhatrapati Sambhajinagar</option>
-                    <option value="Dharashiv">Dharashiv</option>
-                    <option value="Dhule">Dhule</option>
-                    <option value="Gadchiroli">Gadchiroli</option>
-                    <option value="Gondia">Gondia</option>
-                    <option value="Hingoli">Hingoli</option>
-                    <option value="Jalgaon">Jalgaon</option>
-                    <option value="Jalna">Jalna</option>
-                    <option value="Kolhapur">Kolhapur</option>
-                    <option value="Latur">Latur</option>
-                    <option value="Mumbai City">Mumbai City</option>
-                    <option value="Mumbai Suburban">Mumbai Suburban</option>
-                    <option value="Nagpur">Nagpur</option>
-                    <option value="Nanded">Nanded</option>
-                    <option value="Nandurbar">Nandurbar</option>
-                    <option value="Nashik">Nashik</option>
-                    <option value="Palghar">Palghar</option>
-                    <option value="Parbhani">Parbhani</option>
-                    <option value="Pune" selected>Pune</option>
-                    <option value="Raigad">Raigad</option>
-                    <option value="Ratnagiri">Ratnagiri</option>
-                    <option value="Sangli">Sangli</option>
-                    <option value="Satara">Satara</option>
-                    <option value="Sindhudurg">Sindhudurg</option>
-                    <option value="Solapur">Solapur</option>
-                    <option value="Thane">Thane</option>
-                    <option value="Wardha">Wardha</option>
-                    <option value="Washim">Washim</option>
-                    <option value="Yavatmal">Yavatmal</option>
-                </select>
-            </div>
-
-            <div class="chat-container">
-                <div class="chat-header">
-                    <h3 data-translate="ai_assistant"><i class="fas fa-robot"></i> AI Weather Assistant</h3>
-                </div>
-                <div class="chat-box" id="chat-box">
-                    </div>
-                <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Ask about weather or impact..." data-translate-placeholder="ask_placeholder">
-                    <button id="send-btn" aria-label="Send Message"><i class="fas fa-paper-plane"></i></button>
-                </div>
-            </div>
-
-            <div id="impact-analysis" class="info-box">
-                <h3 data-translate="impact_analysis"><i class="fas fa-exclamation-triangle"></i> Impact Analysis</h3>
-                <div id="impact-content">Loading...</div>
-            </div>
-
-            <div id="recommended-actions" class="info-box">
-                <h3 data-translate="recommended_actions"><i class="fas fa-check-circle"></i> Recommended Actions</h3>
-                <div id="actions-content">Loading...</div>
-            </div>
-            
-            <div id="crop-advisory" class="info-box">
-                <h3 data-translate="crop_advisory"><i class="fas fa-seedling"></i> Crop-Specific Advisory</h3>
-                <div id="crop-content">Loading...</div>
-            </div>
-
-            <div id="soil-advisory" class="info-box">
-                <h3 data-translate="soil_advisory"><i class="fas fa-mountain"></i> Soil & Planting Advisory</h3>
-                <div id="soil-content">Loading...</div>
-            </div>
-
-            <div id="historical-info" class="info-box">
-                <h3 data-translate="historical_incidents"><i class="fas fa-history"></i> Historical Incidents</h3>
-                <div id="historical-content">Loading...</div>
-            </div>
+<body class="home-body">
+    <div class="home-container">
+        <div class="home-header">
+            <h1>IN National Monsoon Watch</h1>
+            <p>AI-Powered Weather Decision Support for Maharashtra</p>
         </div>
 
-        <div class="main-content">
-            <h3 data-translate="risk_summary">District Risk Summary</h3>
-            <div class="summary-container">
-                <div class="summary-box danger-border">
-                    <h4><span class="legend-color danger-bg"></span><span data-translate="red_zone">Red Zone</span></h4>
-                    <ul id="danger-list"><li>Loading...</li></ul>
+        <div class="search-container">
+            <h3>Find Your Location</h3>
+            <div class="search-box">
+                <input type="text" id="location-search-input" placeholder="Enter any city or village in Maharashtra..." autocomplete="off">
+                <button id="current-location-btn" aria-label="Use Current Location"><i class="fas fa-crosshairs"></i></button>
+            </div>
+            <div id="search-results" class="search-results-container"></div>
+             <p id="loading-spinner" style="display: none; text-align: center;">Loading...</p>
+        </div>
+
+        <div class="summary-preview">
+            <h3>State-wide Risk Summary</h3>
+            <div class="summary-boxes">
+                 <div class="summary-box danger-border">
+                    <h4><span class="legend-color danger-bg"></span>Red Zone</h4>
+                    <ul id="danger-list"><li>-</li></ul>
                 </div>
                 <div class="summary-box warning-border">
-                    <h4><span class="legend-color warning-bg"></span><span data-translate="yellow_zone">Yellow Zone</span></h4>
-                    <ul id="warning-list"><li>Loading...</li></ul>
+                    <h4><span class="legend-color warning-bg"></span>Yellow Zone</h4>
+                    <ul id="warning-list"><li>-</li></ul>
                 </div>
                 <div class="summary-box normal-border">
-                    <h4><span class="legend-color normal-bg"></span><span data-translate="green_zone">Green Zone</span></h4>
-                    <ul id="normal-list"><li>Loading...</li></ul>
-                </div>
-            </div>
-            <hr>
-            <h3 id="details-title">Detailed View for Pune</h3>
-            <div class="risk-assessment" id="risk-assessment">Status: Loading...</div>
-            
-            <div class="current-conditions">
-                <div class="card">
-                    <h4 data-translate="temperature"><i class="fas fa-thermometer-half"></i> Temperature</h4>
-                    <p id="temperature">--</p>
-                </div>
-                <div class="card">
-                    <h4 data-translate="humidity"><i class="fas fa-tint"></i> Humidity</h4>
-                    <p id="humidity">--</p>
-                </div>
-                <div class="card">
-                    <h4 data-translate="current_rainfall"><i class="fas fa-cloud-showers-heavy"></i> Current Rainfall</h4>
-                    <p id="rainfall">--</p>
-                </div>
-                <div class="card">
-                    <h4 data-translate="pressure"><i class="fas fa-tachometer-alt"></i> Pressure</h4>
-                    <p id="pressure">--</p>
-                </div>
-                <div class="card">
-                    <h4 data-translate="wind_speed"><i class="fas fa-wind"></i> Wind Speed</h4>
-                    <p id="wind-speed">--</p>
-                </div>
-            </div>
-
-            <div class="charts-maps">
-                <div class="map-container">
-                    <h3 data-translate="geo_location">Geographic Location</h3>
-                    <div id="map"></div>
-                </div>
-                <div class="forecast-container">
-                    <h3 data-translate="precip_forecast">5-Day Precipitation Forecast (mm per 3h)</h3>
-                    <canvas id="forecast-chart"></canvas>
-                    <div id="chart-legend" class="legend"></div>
+                    <h4><span class="legend-color normal-bg"></span>Green Zone</h4>
+                    <ul id="normal-list"><li>-</li></ul>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="script.js"></script>
+         <div class="ai-preview">
+            <h3>AI Weather Assistant</h3>
+            <p>Select a location to unlock detailed impact analysis, recommended actions, and chat with our AI assistant.</p>
+            <i class="fas fa-robot ai-icon"></i>
+        </div>
+    </div>
+    <script src="home.js"></script>
 </body>
 </html>
