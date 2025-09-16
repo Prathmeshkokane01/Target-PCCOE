@@ -9,7 +9,7 @@ const normalListEl = document.getElementById('normal-list');
 
 
 // --- CONFIGURATION ---
-const API_KEY = "5a4c5e3313bc10b8a4e086f4c09b522f"; // Your OpenWeatherMap API Key
+// The API_KEY is now loaded from config.js
 const DISTRICT_COORDINATES = {
     "Ahmednagar": { "lat": 19.09, "lon": 74.74 }, "Akola": { "lat": 20.70, "lon": 77.01 }, "Amravati": { "lat": 20.93, "lon": 77.75 },
     "Beed": { "lat": 18.99, "lon": 75.76 }, "Bhandara": { "lat": 21.17, "lon": 79.65 }, "Buldhana": { "lat": 20.53, "lon": 76.18 },
@@ -52,7 +52,7 @@ async function fetchLocations(query) {
     try {
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'IN-Monsoon-Watch-App/1.0 (contact@example.com)'
+                'User-Agent': 'IN-Monsoon-Watch-App/1.0 (prathmeshkokane01@gmail.com)' // It's good practice to add a real contact
             }
         });
         if (!response.ok) throw new Error('Network response was not ok');
@@ -124,7 +124,8 @@ function getCurrentLocation() {
 // Fetch risk levels for major districts for the summary
 async function fetchDistrictSummaries() {
      if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
-        console.error("API Key for OpenWeatherMap is not set.");
+        console.error("API Key for OpenWeatherMap is not set in config.js");
+        alert("Please set your OpenWeatherMap API key in the config.js file.");
         return;
     }
     const lists = { danger: [], warning: [], normal: [] };
@@ -132,7 +133,10 @@ async function fetchDistrictSummaries() {
     const promises = Object.entries(DISTRICT_COORDINATES).map(async ([name, coords]) => {
         try {
             const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${coords.lat}&lon=${coords.lon}&appid=${API_KEY}&units=metric`);
-            if (!response.ok) return null;
+            if (!response.ok) {
+                console.error(`API Error for ${name}: ${response.statusText}`);
+                return null;
+            }
             const data = await response.json();
 
             let maxRain = 0;

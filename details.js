@@ -1,5 +1,5 @@
 // --- CONFIGURATION ---
-const API_KEY = "5a4c5e3313bc10b8a4e086f4c09b522f"; // Your OpenWeatherMap API Key
+// The API_KEY is now loaded from config.js
 
 // --- DOM ELEMENTS ---
 const languageSelect = document.getElementById('language-select');
@@ -153,8 +153,8 @@ const translations = {
 // --- CORE APPLICATION LOGIC ---
 
 async function initializePage() {
-    if (API_KEY === "YOUR_API_KEY_HERE" || !API_KEY) {
-        alert("Please enter a valid OpenWeatherMap API key in details.js");
+    if (typeof API_KEY === 'undefined' || !API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
+        alert("Please set your OpenWeatherMap API key in the config.js file.");
         return;
     }
 
@@ -167,11 +167,15 @@ async function initializePage() {
         return;
     }
 
+    // Show loading indicators
+    const loadingText = translations[languageSelect.value].loading || "Loading...";
+    document.querySelectorAll('.info-box div').forEach(el => el.textContent = loadingText);
+
     const forecastData = await getForecastData(lat, lon);
     const currentData = await getCurrentWeatherData(lat, lon);
 
     if (!forecastData || !currentData) {
-        detailsTitle.textContent = "Error: Could not load weather data for the selected location.";
+        detailsTitle.textContent = "Error: Could not load weather data. Check your API key and network connection.";
         return;
     }
     
@@ -191,7 +195,7 @@ async function initializePage() {
 async function getForecastData(lat, lon) {
     try {
         const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
-        if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+        if (!response.ok) throw new Error(`API error (${response.status}): ${response.statusText}`);
         return await response.json();
     } catch (error) {
         console.error(`Failed to fetch forecast:`, error);
@@ -202,7 +206,7 @@ async function getForecastData(lat, lon) {
 async function getCurrentWeatherData(lat, lon) {
     try {
         const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
-        if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+        if (!response.ok) throw new Error(`API error (${response.status}): ${response.statusText}`);
         return await response.json();
     } catch (error) {
         console.error(`Failed to fetch current weather:`, error);
@@ -213,6 +217,7 @@ async function getCurrentWeatherData(lat, lon) {
 async function fetchAndDisplayHistoricalInfo(districtName) {
     historicalContentEl.innerHTML = translations[languageSelect.value].loading || "Loading...";
     try {
+        // This is a mock implementation. A real app would fetch this from a database or a dedicated API.
         const allIncidents = {
             "Pune": [ { title: "Pune flash floods disrupt daily life (Oct 2022)", link: "https://timesofindia.indiatimes.com/city/pune/maharashtra-pune-rains-live-updates-heavy-rainfall-leads-to-waterlogging-in-many-areas-schools-closed/liveblog/94833249.cms", snippet: "Heavy rainfall led to waterlogging in many areas..." }, { title: "Landslide near Katraj Tunnel (Jul 2022)", link: "https://indianexpress.com/article/cities/pune/pune-landslide-katraj-ghat-section-traffic-disrupted-8042571/", snippet: "A minor landslide was reported, affecting traffic..." } ],
             "Hingoli": [ { title: "Two die in Hingoli floods (Aug 2023)", link: "https://www.youtube.com/watch?v=ZxNC7OuCPCM", snippet: "Heavy rains and flooding in the Asna river..." }, { title: "Crops damaged in Hingoli (Jul 2022)", link: "https://timesofindia.indiatimes.com/city/aurangabad/marathwada-receives-12-excess-rain-so-far/articleshow/93032514.cms", snippet: "Over 40,000 hectares of crops were damaged..." } ]
@@ -301,8 +306,17 @@ function updateMap(lat, lon) {
 }
 
 function updateForecastChart(forecastList) {
-    const labels = forecastList.map(item => new Date(item.dt * 1000).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + " " + new Date(item.dt * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+    // UPDATED AND IMPROVED CODE FOR CHART LABELS
+    const labels = forecastList.map(item => {
+        const date = new Date(item.dt * 1000);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+        const time = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).toLowerCase();
+        return `${day}/${month} ${time}`;
+    });
+    
     const data = forecastList.map(item => item.rain?.['3h'] || 0);
+
     if (forecastChart) {
         forecastChart.data.labels = labels;
         forecastChart.data.datasets[0].data = data;
@@ -310,11 +324,35 @@ function updateForecastChart(forecastList) {
     } else {
         forecastChart = new Chart(forecastCanvas, {
             type: 'bar',
-            data: { labels, datasets: [{ label: 'Precipitation (mm)', data, backgroundColor: 'rgba(0, 123, 255, 0.5)', borderWidth: 1 }] },
-            options: { scales: { y: { beginAtZero: true } }, responsive: true, maintainAspectRatio: false }
+            data: { 
+                labels, 
+                datasets: [{ 
+                    label: 'Precipitation (mm)', 
+                    data, 
+                    backgroundColor: 'rgba(0, 123, 255, 0.5)', 
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1 
+                }] 
+            },
+            options: { 
+                scales: { 
+                    y: { 
+                        beginAtZero: true 
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 70,
+                            minRotation: 70
+                        }
+                    }
+                }, 
+                responsive: true, 
+                maintainAspectRatio: false 
+            }
         });
     }
 }
+
 
 function updateLegends() {
     const lang = languageSelect.value;
