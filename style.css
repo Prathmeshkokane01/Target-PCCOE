@@ -17,14 +17,14 @@ body {
     margin: 0;
     overflow: hidden;
     color: var(--text-dark);
-    padding-top: 50px; /* Fix: Added padding */
-    box-sizing: border-box; /* Fix: Added box-sizing */
+    padding-top: 50px;
+    box-sizing: border-box;
 }
 
 /* --- Homepage Specific Styles --- */
 .home-body {
     overflow-y: auto;
-    padding-top: 0; /* Homepage doesn't need the top padding */
+    padding-top: 0;
 }
 .home-container {
     max-width: 800px;
@@ -97,7 +97,7 @@ body {
     max-height: 250px;
     overflow-y: auto;
     z-index: 1000;
-    display: none; /* Hidden by default */
+    display: none;
 }
 .search-result-item {
     padding: 12px 15px;
@@ -119,19 +119,19 @@ body {
 /* --- Details Page Specific Styles --- */
 .back-link {
     position: absolute;
-    top: 18px;   /* Fix: Adjusted position */
-    left: 30px;  /* Fix: Adjusted position */
+    top: 18px;
+    left: 30px;
     text-decoration: none;
     color: var(--primary);
     font-weight: bold;
     z-index: 1001;
-    background-color: #f0f2f5; /* Fix: Added background */
-    padding: 5px; /* Fix: Added padding */
+    background-color: #f0f2f5;
+    padding: 5px;
 }
 .container {
     display: flex;
     width: 100%;
-    height: calc(100vh - 50px); /* Fix: Adjusted height */
+    height: calc(100vh - 50px);
     background-color: white;
 }
 .sidebar {
@@ -227,14 +227,14 @@ h3:first-child { margin-top: 0; }
 @media (max-width: 1200px) {
     body { overflow: auto; }
     .container { flex-direction: column; height: auto; }
-    .sidebar { width: 100%; max-width: none; height: auto; border-right: none; border-bottom: 2px solid var(--border-color); }
-    .main-content { height: auto; }
+    .main-content { order: 1; } /* This makes the map and charts appear first */
+    .sidebar { width: 100%; max-width: none; height: auto; border-right: none; border-bottom: 2px solid var(--border-color); order: 2; } /* This makes the sidebar appear second */
 }
 @media (max-width: 768px) {
     .home-container { margin: 20px; padding: 15px; }
-    .summary-container, .current-conditions, .charts-maps { flex-direction: column; }
+    .current-conditions, .charts-maps { flex-direction: column; }
     .summary-box, .card, .map-container, .forecast-container { width: 100%; box-sizing: border-box; }
     .home-header h1 { font-size: 2rem; }
-    .summary-boxes { flex-direction: column; } /* This is the key fix for mobile layout */
+    .summary-boxes { flex-direction: column; }
     .summary-box h4 { font-size: 0.9rem; }
 }

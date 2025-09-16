@@ -106,7 +106,7 @@ function getCurrentLocation() {
     loadingSpinner.textContent = 'Fetching current location...';
     const options = {
         enableHighAccuracy: true,
-        timeout: 30000, // Increased timeout to 30 seconds
+        timeout: 30000, 
         maximumAge: 0
     };
 
@@ -117,11 +117,15 @@ function getCurrentLocation() {
         },
         (err) => {
             loadingSpinner.style.display = 'none';
-            let message = `Could not get your location.\nERROR(${err.code}): ${err.message}`;
-            if (err.code === 3) { // Timeout error
+            let message;
+            if (err.code === 1) { // PERMISSION_DENIED
+                message = "You have denied location access. To use this feature, please enable location permissions for this site in your browser settings.";
+            } else if (err.code === 2) { // POSITION_UNAVAILABLE
+                message = "Your location could not be determined. Please ensure your device's GPS is on.";
+            } else if (err.code === 3) { // TIMEOUT
                 message = "Location request timed out. Please try again with a better network signal.";
-            } else if (err.code === 1) { // Permission denied
-                message = "You have denied location access. Please enable it in your browser settings.";
+            } else {
+                message = `An unknown error occurred.\nERROR(${err.code}): ${err.message}`;
             }
             alert(message);
         },
