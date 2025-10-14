@@ -32,6 +32,15 @@ const aqiEl = document.getElementById('aqi');
 const aqiStatusEl = document.getElementById('aqi-status');
 const aqiCardEl = document.getElementById('aqi-card');
 const helplineContentEl = document.getElementById('helpline-content');
+const weatherIconEl = document.getElementById('weather-icon');
+const uvIndexEl = document.getElementById('uv-index');
+const uvStatusEl = document.getElementById('uv-status');
+const uvCardEl = document.getElementById('uv-card');
+const sunriseTimeEl = document.getElementById('sunrise-time');
+const sunsetTimeEl = document.getElementById('sunset-time');
+const locationMapBtn = document.getElementById('location-map-btn');
+const radarMapBtn = document.getElementById('radar-map-btn');
+const radarMapIframe = document.getElementById('radar-map-iframe');
 
 // --- APP STATE ---
 let map;
@@ -49,9 +58,9 @@ const translations = {
         soil_advisory: "Soil & Planting Advisory", historical_incidents: "Historical Incidents",
         red_zone: "Red Zone", yellow_zone: "Yellow Zone", green_zone: "Green Zone",
         detailed_view: "Detailed View for", temperature: "Temperature", humidity: "Humidity", current_rainfall: "Current Rainfall",
-        pressure: "Pressure", wind_speed: "Wind Speed", geo_location: "Geographic Location", precip_forecast: "5-Day Precipitation Forecast (mm per 3h)",
+        pressure: "Pressure", wind_speed: "Wind Speed", geo_location: "Geographic View", precip_forecast: "5-Day Precipitation Forecast (mm per 3h)",
         loading: "Loading...", data_unavailable: "Data Unavailable", status: "Status",
-        ai_welcome: "Hello! I am a fully operational weather assistant with multilingual support. Ask me anything!",
+        ai_welcome: "Hello! I am an AI weather assistant. You can ask me for the current weather, forecast, AQI, UV Index, or impact advisories.",
         ai_error: "I'm sorry, I encountered an error. Please try your question again.",
         ai_fallback: "I can provide a weather forecast, impact analysis, or recommended actions for <b>{district}</b>.",
         ai_greeting: "Hello! How can I help you with the weather today?",
@@ -161,7 +170,6 @@ const translations = {
     }
 };
 
-// --- MOCK DATA FOR HELPLINES ---
 const cityHelplines = {
     "Mumbai": { "Disaster Management": "1916", "Police": "100", "Ambulance": "108" },
     "Delhi": { "Disaster Management": "1077", "Police": "112", "Ambulance": "102" },
@@ -192,11 +200,13 @@ async function initializePage() {
         loadingOverlay.style.display = 'none';
         return;
     }
-
-    const [forecastData, currentData, airQualityData] = await Promise.all([
+    
+    // Fetch all data in parallel for speed
+    const [forecastData, currentData, airQualityData, uvData] = await Promise.all([
         getForecastData(lat, lon),
         getCurrentWeatherData(lat, lon),
-        getAirQualityData(lat, lon)
+        getAirQualityData(lat, lon),
+        getUvData(lat, lon)
     ]);
 
     if (!forecastData || !currentData) {
@@ -208,10 +218,13 @@ async function initializePage() {
     const districtName = forecastData.city.name;
     currentDistrictData = {
         name: districtName,
+        lat: lat,
+        lon: lon,
         risk: getRiskLevel(forecastData),
         forecastData: forecastData,
         currentData: currentData,
-        airQualityData: airQualityData
+        airQualityData: airQualityData,
+        uvData: uvData
     };
     
     chatContext.district = districtName;
@@ -219,6 +232,7 @@ async function initializePage() {
     fetchAndDisplayHistoricalInfo(districtName);
 
     loadingOverlay.style.display = 'none';
+    document.querySelector('.container').classList.add('loaded');
 }
 
 async function getForecastData(lat, lon) {
@@ -254,6 +268,20 @@ async function getAirQualityData(lat, lon) {
     }
 }
 
+async function getUvData(lat, lon) {
+    try {
+        // Note: OpenWeatherMap free tier doesn't provide UV index in a separate endpoint. 
+        // We'll use the One Call API 3.0 which is also free and includes it.
+        const response = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${API_KEY}&units=metric`);
+         if (!response.ok) throw new Error(`API error (${response.status}): ${response.statusText}`);
+        return await response.json();
+    } catch (error) {
+        console.error(`Failed to fetch UV data:`, error);
+        return null;
+    }
+}
+
+
 async function fetchAndDisplayHistoricalInfo(districtName) {
     historicalContentEl.innerHTML = translations[languageSelect.value].loading || "Loading...";
     try {
@@ -287,7 +315,7 @@ function updateDetailedView() {
     detailsTitle.textContent = `${translations[lang].detailed_view || 'Detailed View for'} ${districtName}`;
     updateRiskAssessment(district.risk);
     updateCurrentConditions(district.currentData);
-    updateMap(district.currentData.coord.lat, district.currentData.coord.lon);
+    updateMap(district.lat, district.lon);
     updateForecastChart(district.forecastData.list);
     updateLegends();
     updateImpactAnalysis(district);
@@ -298,6 +326,8 @@ function updateDetailedView() {
     updateDisasterAdvisory(district.risk, districtName);
     updateAirQuality(district.airQualityData);
     updateHelplines(districtName);
+    updateUvIndex(district.uvData);
+    updateRadarMap(district.lat, district.lon);
 }
 
 function getRiskLevel(data) {
@@ -334,7 +364,32 @@ function updateCurrentConditions(current) {
     pressureEl.textContent = `${current.main.pressure} hPa`;
     windSpeedEl.textContent = `${(current.wind.speed * 3.6).toFixed(1)} km/h`;
     visibilityEl.textContent = `${(current.visibility / 1000).toFixed(1)} km`;
+
+    // Update main weather icon
+    const iconCode = current.weather[0].icon;
+    const iconClass = getWeatherIconClass(iconCode);
+    weatherIconEl.innerHTML = `<i class="fas ${iconClass}"></i>`;
+
+    // Update sunrise and sunset
+    const sunrise = new Date(current.sys.sunrise * 1000);
+    const sunset = new Date(current.sys.sunset * 1000);
+    const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+    sunriseTimeEl.textContent = sunrise.toLocaleTimeString('en-IN', timeOptions);
+    sunsetTimeEl.textContent = sunset.toLocaleTimeString('en-IN', timeOptions);
 }
+
+function getWeatherIconClass(iconCode) {
+    if (iconCode.startsWith('01')) return 'fa-sun'; // clear sky
+    if (iconCode.startsWith('02')) return 'fa-cloud-sun'; // few clouds
+    if (iconCode.startsWith('03') || iconCode.startsWith('04')) return 'fa-cloud'; // scattered/broken clouds
+    if (iconCode.startsWith('09')) return 'fa-cloud-showers-heavy'; // shower rain
+    if (iconCode.startsWith('10')) return 'fa-cloud-sun-rain'; // rain
+    if (iconCode.startsWith('11')) return 'fa-bolt'; // thunderstorm
+    if (iconCode.startsWith('13')) return 'fa-snowflake'; // snow
+    if (iconCode.startsWith('50')) return 'fa-smog'; // mist
+    return 'fa-question-circle';
+}
+
 
 function updateAirQuality(aqiData) {
     if (!aqiData || !aqiData.list || !aqiData.list[0]) {
@@ -361,6 +416,28 @@ function updateAirQuality(aqiData) {
     aqiCardEl.classList.add(colorClass);
 }
 
+function updateUvIndex(uvData) {
+    if (!uvData || typeof uvData.current?.uvi === 'undefined') {
+        uvIndexEl.textContent = "N/A";
+        uvStatusEl.textContent = "Data Unavailable";
+        return;
+    }
+    const uvValue = uvData.current.uvi;
+    let status = "";
+    let colorClass = "";
+
+    if (uvValue <= 2) { status = "Low"; colorClass = "uv-low"; }
+    else if (uvValue <= 5) { status = "Moderate"; colorClass = "uv-moderate"; }
+    else if (uvValue <= 7) { status = "High"; colorClass = "uv-high"; }
+    else if (uvValue <= 10) { status = "Very High"; colorClass = "uv-very-high"; }
+    else { status = "Extreme"; colorClass = "uv-extreme"; }
+
+    uvIndexEl.textContent = uvValue.toFixed(1);
+    uvStatusEl.textContent = status;
+    uvCardEl.className = 'card uv-card';
+    uvCardEl.classList.add(colorClass);
+}
+
 function updateHelplines(cityName) {
     const helplines = cityHelplines[cityName] || cityHelplines["Default"];
     let html = '<ul>';
@@ -374,7 +451,7 @@ function updateHelplines(cityName) {
 function updateMap(lat, lon) {
     if (!map) {
         map = L.map(mapEl).setView([lat, lon], 9);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
     } else {
         map.setView([lat, lon], 9);
     }
@@ -383,6 +460,11 @@ function updateMap(lat, lon) {
     } else {
         districtMarker = L.marker([lat, lon]).addTo(map);
     }
+}
+
+function updateRadarMap(lat, lon) {
+    const zoom = 7;
+    radarMapIframe.src = `https://www.rainviewer.com/map.html?loc=${lat},${lon},${zoom}&o=80&c=2&t=1`;
 }
 
 function updateForecastChart(forecastList) {
@@ -408,21 +490,22 @@ function updateForecastChart(forecastList) {
                 datasets: [{ 
                     label: 'Precipitation (mm)', 
                     data, 
-                    backgroundColor: 'rgba(0, 123, 255, 0.5)', 
-                    borderColor: 'rgba(0, 123, 255, 1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.5)', 
+                    borderColor: 'rgba(255, 255, 255, 1)',
                     borderWidth: 1 
                 }] 
             },
-            options: { 
+            options: {
+                 plugins: { legend: { labels: { color: 'white' } } },
                 scales: { 
                     y: { 
-                        beginAtZero: true 
+                        beginAtZero: true,
+                        ticks: { color: 'white' },
+                        grid: { color: 'rgba(255,255,255,0.2)' }
                     },
                     x: {
-                        ticks: {
-                            maxRotation: 70,
-                            minRotation: 70
-                        }
+                        ticks: { color: 'white', maxRotation: 70, minRotation: 70 },
+                        grid: { color: 'rgba(255,255,255,0.2)' }
                     }
                 }, 
                 responsive: true, 
@@ -688,6 +771,10 @@ function extractMetrics(query) {
         actions: ['actions', 'recommendations', 'should i do'],
         crop: ['crop', 'farm', 'agriculture', 'advisory'],
         soil: ['soil'],
+        uv: ['uv', 'ultraviolet', 'sunburn'],
+        aqi: ['aqi', 'air quality', 'pollution'],
+        sunrise: ['sunrise', 'sun up'],
+        sunset: ['sunset', 'sun down'],
         general: ['weather', 'status', 'conditions', 'information', 'forecast']
     };
     for (const metric in synonyms) {
@@ -740,20 +827,26 @@ function handleForecast(districtData, dateInfo, metrics) {
 }
 
 async function handleCurrentWeather(districtData, metrics) {
-    if (metrics.length === 0) metrics.push('temperature', 'humidity', 'rain', 'risk', 'pressure', 'wind');
+    if (metrics.length === 0) metrics.push('temperature', 'humidity', 'rain', 'risk', 'pressure', 'wind', 'aqi', 'uv', 'sunrise', 'sunset');
     const current = districtData.currentData;
+    const aqiData = districtData.airQualityData;
+    const uvData = districtData.uvData;
     
-    const parts = [],
-        risk = districtData.risk;
+    const parts = [];
+    const risk = districtData.risk;
     const responseData = {};
     const riskZone = risk.level === 'danger' ? 'Red Zone' : risk.level === 'warning' ? 'Yellow Zone' : 'Green Zone';
 
-    if (metrics.includes('temperature')) { parts.push(`- Temperature: <b>${current.main.temp.toFixed(1)}°C</b>`); responseData.temperature = current.main.temp; }
+    if (metrics.includes('temperature')) { parts.push(`- Temperature: <b>${current.main.temp.toFixed(1)}°C</b> (Feels like ${current.main.feels_like.toFixed(1)}°C)`); responseData.temperature = current.main.temp; }
     if (metrics.includes('humidity')) { parts.push(`- Humidity: <b>${current.main.humidity}%</b>`); responseData.humidity = current.main.humidity; }
     if (metrics.includes('rain')) { parts.push(`- Rainfall (last 1h): <b>${(current.rain?.['1h'] || 0).toFixed(1)} mm</b>`); responseData.rain = (current.rain?.['1h'] || 0); }
     if (metrics.includes('risk')) { parts.push(`- 24h Risk Level: <b>${riskZone}</b>`); responseData.risk = risk.level; }
     if (metrics.includes('pressure')) { parts.push(`- Pressure: <b>${current.main.pressure} hPa</b>`); responseData.pressure = current.main.pressure; }
     if (metrics.includes('wind')) { parts.push(`- Wind Speed: <b>${(current.wind.speed * 3.6).toFixed(1)} km/h</b>`); responseData.wind = current.wind.speed; }
+    if (metrics.includes('aqi') && aqiData) { parts.push(`- Air Quality (AQI): <b>${aqiData.list[0].main.aqi}</b>`); responseData.aqi = aqiData.list[0].main.aqi; }
+    if (metrics.includes('uv') && uvData) { parts.push(`- UV Index: <b>${uvData.current.uvi.toFixed(1)}</b>`); responseData.uv = uvData.current.uvi; }
+    if (metrics.includes('sunrise')) { parts.push(`- Sunrise: <b>${new Date(current.sys.sunrise * 1000).toLocaleTimeString('en-IN')}</b>`); }
+    if (metrics.includes('sunset')) { parts.push(`- Sunset: <b>${new Date(current.sys.sunset * 1000).toLocaleTimeString('en-IN')}</b>`); }
     
     const response = `Current status for <b>${districtData.name}</b>:<br>${parts.join('<br>')}`;
     return { response, data: responseData };
@@ -773,4 +866,18 @@ reportBtn.addEventListener('click', () => {
             <small>- A local user (just now)</small>
         </div>
     `;
+});
+
+locationMapBtn.addEventListener('click', () => {
+    mapEl.style.display = 'block';
+    radarMapIframe.style.display = 'none';
+    locationMapBtn.classList.add('active');
+    radarMapBtn.classList.remove('active');
+});
+
+radarMapBtn.addEventListener('click', () => {
+    mapEl.style.display = 'none';
+    radarMapIframe.style.display = 'block';
+    locationMapBtn.classList.remove('active');
+    radarMapBtn.classList.add('active');
 });
