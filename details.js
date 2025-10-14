@@ -25,6 +25,13 @@ const imdAlertContentEl = document.getElementById('imd-alert-content');
 const disasterContentEl = document.getElementById('disaster-content');
 const reportBtn = document.getElementById('report-condition-btn');
 const userReportsContentEl = document.getElementById('user-reports-content');
+const loadingOverlay = document.getElementById('loading-overlay');
+const feelsLikeEl = document.getElementById('feels-like');
+const visibilityEl = document.getElementById('visibility');
+const aqiEl = document.getElementById('aqi');
+const aqiStatusEl = document.getElementById('aqi-status');
+const aqiCardEl = document.getElementById('aqi-card');
+const helplineContentEl = document.getElementById('helpline-content');
 
 // --- APP STATE ---
 let map;
@@ -154,11 +161,25 @@ const translations = {
     }
 };
 
+// --- MOCK DATA FOR HELPLINES ---
+const cityHelplines = {
+    "Mumbai": { "Disaster Management": "1916", "Police": "100", "Ambulance": "108" },
+    "Delhi": { "Disaster Management": "1077", "Police": "112", "Ambulance": "102" },
+    "Pune": { "Disaster Management": "1077", "Police": "112", "Ambulance": "108" },
+    "Bengaluru": { "Disaster Management": "1070", "Police": "100", "Ambulance": "108" },
+    "Chennai": { "Disaster Management": "1070", "Police": "100", "Ambulance": "108" },
+    "Kolkata": { "Disaster Management": "1070", "Police": "100", "Ambulance": "102" },
+    "Default": { "National Disaster Helpline": "1078", "Police": "112", "Ambulance": "108" }
+};
+
 // --- CORE APPLICATION LOGIC ---
 
 async function initializePage() {
+    loadingOverlay.style.display = 'flex';
+
     if (typeof API_KEY === 'undefined' || !API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
         alert("Please set your OpenWeatherMap API key in the config.js file.");
+        loadingOverlay.style.display = 'none';
         return;
     }
 
@@ -168,17 +189,19 @@ async function initializePage() {
 
     if (!lat || !lon) {
         detailsTitle.textContent = "Error: No location selected. Please go back and choose a location.";
+        loadingOverlay.style.display = 'none';
         return;
     }
 
-    const loadingText = translations[languageSelect.value].loading || "Loading...";
-    document.querySelectorAll('.info-box div').forEach(el => el.textContent = loadingText);
-
-    const forecastData = await getForecastData(lat, lon);
-    const currentData = await getCurrentWeatherData(lat, lon);
+    const [forecastData, currentData, airQualityData] = await Promise.all([
+        getForecastData(lat, lon),
+        getCurrentWeatherData(lat, lon),
+        getAirQualityData(lat, lon)
+    ]);
 
     if (!forecastData || !currentData) {
         detailsTitle.textContent = "Error: Could not load weather data. Check your API key and network connection.";
+        loadingOverlay.style.display = 'none';
         return;
     }
     
@@ -187,12 +210,15 @@ async function initializePage() {
         name: districtName,
         risk: getRiskLevel(forecastData),
         forecastData: forecastData,
-        currentData: currentData
+        currentData: currentData,
+        airQualityData: airQualityData
     };
     
     chatContext.district = districtName;
     translatePage(languageSelect.value); 
     fetchAndDisplayHistoricalInfo(districtName);
+
+    loadingOverlay.style.display = 'none';
 }
 
 async function getForecastData(lat, lon) {
@@ -213,6 +239,17 @@ async function getCurrentWeatherData(lat, lon) {
         return await response.json();
     } catch (error) {
         console.error(`Failed to fetch current weather:`, error);
+        return null;
+    }
+}
+
+async function getAirQualityData(lat, lon) {
+    try {
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
+        if (!response.ok) throw new Error(`API error (${response.status}): ${response.statusText}`);
+        return await response.json();
+    } catch (error) {
+        console.error(`Failed to fetch air quality:`, error);
         return null;
     }
 }
@@ -259,6 +296,8 @@ function updateDetailedView() {
     updateSoilAdvisory(district);
     updateImdAlert(district.risk, districtName);
     updateDisasterAdvisory(district.risk, districtName);
+    updateAirQuality(district.airQualityData);
+    updateHelplines(districtName);
 }
 
 function getRiskLevel(data) {
@@ -288,11 +327,48 @@ function updateRiskAssessment(risk) {
 }
 
 function updateCurrentConditions(current) {
-    temperatureEl.textContent = `${current.main.temp.toFixed(1)} °C`;
-    humidityEl.textContent = `${current.main.humidity} %`;
+    temperatureEl.textContent = `${current.main.temp.toFixed(1)}°C`;
+    feelsLikeEl.textContent = `Feels like ${current.main.feels_like.toFixed(1)}°C`;
+    humidityEl.textContent = `${current.main.humidity}%`;
     rainfallEl.textContent = `${(current.rain?.['1h'] || 0).toFixed(1)} mm`;
     pressureEl.textContent = `${current.main.pressure} hPa`;
     windSpeedEl.textContent = `${(current.wind.speed * 3.6).toFixed(1)} km/h`;
+    visibilityEl.textContent = `${(current.visibility / 1000).toFixed(1)} km`;
+}
+
+function updateAirQuality(aqiData) {
+    if (!aqiData || !aqiData.list || !aqiData.list[0]) {
+        aqiEl.textContent = "N/A";
+        aqiStatusEl.textContent = "Data Unavailable";
+        return;
+    }
+    const aqiValue = aqiData.list[0].main.aqi;
+    let status = "";
+    let colorClass = "";
+
+    switch (aqiValue) {
+        case 1: status = "Good"; colorClass = "aqi-good"; break;
+        case 2: status = "Fair"; colorClass = "aqi-fair"; break;
+        case 3: status = "Moderate"; colorClass = "aqi-moderate"; break;
+        case 4: status = "Poor"; colorClass = "aqi-poor"; break;
+        case 5: status = "Very Poor"; colorClass = "aqi-very-poor"; break;
+        default: status = "Unknown";
+    }
+
+    aqiEl.textContent = aqiValue;
+    aqiStatusEl.textContent = status;
+    aqiCardEl.className = 'card aqi-card';
+    aqiCardEl.classList.add(colorClass);
+}
+
+function updateHelplines(cityName) {
+    const helplines = cityHelplines[cityName] || cityHelplines["Default"];
+    let html = '<ul>';
+    for (const [service, number] of Object.entries(helplines)) {
+        html += `<li><strong>${service}:</strong> <a href="tel:${number}">${number}</a></li>`;
+    }
+    html += '</ul>';
+    helplineContentEl.innerHTML = html;
 }
 
 function updateMap(lat, lon) {
