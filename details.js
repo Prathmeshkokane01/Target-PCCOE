@@ -21,6 +21,10 @@ const impactContentEl = document.getElementById('impact-content');
 const actionsContentEl = document.getElementById('actions-content');
 const cropContentEl = document.getElementById('crop-content');
 const soilContentEl = document.getElementById('soil-content');
+const imdAlertContentEl = document.getElementById('imd-alert-content');
+const disasterContentEl = document.getElementById('disaster-content');
+const reportBtn = document.getElementById('report-condition-btn');
+const userReportsContentEl = document.getElementById('user-reports-content');
 
 // --- APP STATE ---
 let map;
@@ -167,7 +171,6 @@ async function initializePage() {
         return;
     }
 
-    // Show loading indicators
     const loadingText = translations[languageSelect.value].loading || "Loading...";
     document.querySelectorAll('.info-box div').forEach(el => el.textContent = loadingText);
 
@@ -217,7 +220,6 @@ async function getCurrentWeatherData(lat, lon) {
 async function fetchAndDisplayHistoricalInfo(districtName) {
     historicalContentEl.innerHTML = translations[languageSelect.value].loading || "Loading...";
     try {
-        // This is a mock implementation. A real app would fetch this from a database or a dedicated API.
         const allIncidents = {
             "Pune": [ { title: "Pune flash floods disrupt daily life (Oct 2022)", link: "https://timesofindia.indiatimes.com/city/pune/maharashtra-pune-rains-live-updates-heavy-rainfall-leads-to-waterlogging-in-many-areas-schools-closed/liveblog/94833249.cms", snippet: "Heavy rainfall led to waterlogging in many areas..." }, { title: "Landslide near Katraj Tunnel (Jul 2022)", link: "https://indianexpress.com/article/cities/pune/pune-landslide-katraj-ghat-section-traffic-disrupted-8042571/", snippet: "A minor landslide was reported, affecting traffic..." } ],
             "Hingoli": [ { title: "Two die in Hingoli floods (Aug 2023)", link: "https://www.youtube.com/watch?v=ZxNC7OuCPCM", snippet: "Heavy rains and flooding in the Asna river..." }, { title: "Crops damaged in Hingoli (Jul 2022)", link: "https://timesofindia.indiatimes.com/city/aurangabad/marathwada-receives-12-excess-rain-so-far/articleshow/93032514.cms", snippet: "Over 40,000 hectares of crops were damaged..." } ]
@@ -255,6 +257,8 @@ function updateDetailedView() {
     updateRecommendedActions(district.risk);
     updateCropAdvisory(district);
     updateSoilAdvisory(district);
+    updateImdAlert(district.risk, districtName);
+    updateDisasterAdvisory(district.risk, districtName);
 }
 
 function getRiskLevel(data) {
@@ -306,11 +310,10 @@ function updateMap(lat, lon) {
 }
 
 function updateForecastChart(forecastList) {
-    // UPDATED AND IMPROVED CODE FOR CHART LABELS
     const labels = forecastList.map(item => {
         const date = new Date(item.dt * 1000);
         const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+        const month = String(date.getMonth() + 1).padStart(2, '0');
         const time = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).toLowerCase();
         return `${day}/${month} ${time}`;
     });
@@ -411,6 +414,54 @@ function updateSoilAdvisory(district) {
         <p>${(soil_items.moisture || "").replace('{value}', avgSoilMoisture.toFixed(0))}</p>
         <p style="font-size: 0.8rem; margin-top: 5px;">${soil_items.note || ""}</p>
     `;
+}
+
+function updateImdAlert(risk, districtName) {
+    let alertHtml = '';
+    if (risk.level === 'danger') {
+        alertHtml = `
+            <div class="imd-alert-box red">
+                <strong>RED ALERT</strong>
+                <p>Issued for ${districtName}. Expect extremely heavy rainfall (>20 cm) in isolated areas. High risk of flash floods and landslides. Stay indoors and follow official guidance.</p>
+                <small>Source: IMD (Simulated)</small>
+            </div>`;
+    } else if (risk.level === 'warning') {
+        alertHtml = `
+            <div class="imd-alert-box orange">
+                <strong>ORANGE ALERT</strong>
+                <p>Issued for ${districtName}. Heavy to very heavy rainfall (7-20 cm) expected. Be prepared for travel disruptions and waterlogging.</p>
+                <small>Source: IMD (Simulated)</small>
+            </div>`;
+    } else {
+         alertHtml = `
+            <div class="imd-alert-box green">
+                <strong>NO WARNING</strong>
+                <p>No severe weather warnings are currently in effect for ${districtName}.</p>
+                <small>Source: IMD (Simulated)</small>
+            </div>`;
+    }
+    imdAlertContentEl.innerHTML = alertHtml;
+}
+
+function updateDisasterAdvisory(risk, districtName) {
+    let advisoryHtml = '<ul>';
+    if (risk.level === 'danger') {
+        advisoryHtml += `
+            <li><b>Priority 1:</b> Activate emergency response teams in ${districtName}.</li>
+            <li>Identify and prepare evacuation shelters.</li>
+            <li>Monitor river levels and dam outflows continuously.</li>
+            <li>Broadcast public safety announcements via all channels.</li>`;
+    } else if (risk.level === 'warning') {
+        advisoryHtml += `
+            <li>Place emergency teams on standby for ${districtName}.</li>
+            <li>Ensure drainage systems and culverts are clear of blockages.</li>
+            <li>Advise traffic police to prepare for diversions in low-lying areas.</li>
+            <li>Send precautionary alerts to vulnerable communities.</li>`;
+    } else {
+        advisoryHtml += '<li>Standard monsoon preparedness protocols are sufficient. Continue monitoring forecasts.</li>';
+    }
+    advisoryHtml += '</ul>';
+    disasterContentEl.innerHTML = advisoryHtml;
 }
 
 function translatePage(lang) {
@@ -637,3 +688,13 @@ languageSelect.addEventListener('change', (e) => translatePage(e.target.value));
 sendBtn.addEventListener('click', handleUserQuery);
 chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleUserQuery(); });
 window.addEventListener('load', initializePage);
+reportBtn.addEventListener('click', () => {
+    alert("Thank you for your report! This feature would allow users to submit photos and descriptions of local conditions to improve forecast accuracy.");
+    userReportsContentEl.innerHTML = `
+        <p><b>Your report has been submitted.</b></p>
+        <div class="user-report-item">
+            <p>"Just started raining heavily near the main market."</p>
+            <small>- A local user (just now)</small>
+        </div>
+    `;
+});

@@ -22,8 +22,8 @@ body {
 
 /* --- Homepage Specific Styles --- */
 .home-body {
-    background: url('weather.jpg') no-repeat center center fixed; /* Added background image */
-    background-size: cover; /* Ensures the image covers the entire background */
+    background: url('weather.jpg') no-repeat center center fixed;
+    background-size: cover;
     padding: 20px 0;
     min-height: 100vh;
     overflow-y: auto;
@@ -32,10 +32,10 @@ body {
     max-width: 800px;
     margin: 40px auto;
     padding: 30px 40px;
-    background-color: rgba(255, 255, 255, 0.9); /* Slightly reduced opacity for readability over image */
+    background-color: rgba(255, 255, 255, 0.9);
     border-radius: 12px;
     box-shadow: var(--shadow);
-    backdrop-filter: blur(5px); /* Added a subtle blur for better text readability */
+    backdrop-filter: blur(5px);
 }
 .home-header {
     text-align: center;
@@ -249,6 +249,90 @@ h3:first-child { margin-top: 0; }
 #impact-analysis, #recommended-actions, #crop-advisory, #soil-advisory { border-left: 4px solid var(--primary); }
 #impact-content ul, #actions-content ul { list-style-type: none; padding-left: 0; margin-left: 0; }
 #impact-content li, #actions-content li { padding: 5px 0; }
+.info-box#imd-alert {
+    border-left: 4px solid #007bff;
+}
+.imd-alert-box {
+    padding: 15px;
+    border-radius: 5px;
+    color: #fff;
+    margin-bottom: 10px;
+}
+.imd-alert-box.red { background-color: #d9534f; }
+.imd-alert-box.orange { background-color: #f0ad4e; }
+.imd-alert-box.green { background-color: #5cb85c; }
+.imd-alert-box strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+}
+.imd-alert-box p {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    color: #fff;
+}
+.imd-alert-box small {
+    display: block;
+    text-align: right;
+    opacity: 0.8;
+}
+.info-box#disaster-management {
+    border-left: 4px solid #6c757d;
+}
+#disaster-content ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-left: 0;
+}
+#disaster-content li {
+    padding: 5px 0;
+}
+.user-reporting {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: var(--light-gray);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.user-reporting h3 {
+    margin-top: 0;
+    border-bottom: 2px solid var(--medium-gray);
+    padding-bottom: 5px;
+}
+#report-condition-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+#report-condition-btn:hover {
+    background-color: #025aa5;
+}
+.user-report-item {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+}
+.user-report-item p {
+    font-style: italic;
+    margin: 0;
+}
+.user-report-item small {
+    display: block;
+    text-align: right;
+    color: #777;
+    margin-top: 5px;
+}
 
 /* Responsive Design */
 @media (max-width: 1200px) {

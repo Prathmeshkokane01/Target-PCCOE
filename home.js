@@ -11,18 +11,11 @@ const normalListEl = document.getElementById('normal-list');
 // --- CONFIGURATION ---
 // The API_KEY is now loaded from config.js
 const DISTRICT_COORDINATES = {
-    "Ahmednagar": { "lat": 19.09, "lon": 74.74 }, "Akola": { "lat": 20.70, "lon": 77.01 }, "Amravati": { "lat": 20.93, "lon": 77.75 },
-    "Beed": { "lat": 18.99, "lon": 75.76 }, "Bhandara": { "lat": 21.17, "lon": 79.65 }, "Buldhana": { "lat": 20.53, "lon": 76.18 },
-    "Chandrapur": { "lat": 19.96, "lon": 79.29 }, "Chhatrapati Sambhajinagar": { "lat": 19.87, "lon": 75.34 }, "Dhule": { "lat": 20.90, "lon": 74.77 },
-    "Gadchiroli": { "lat": 20.18, "lon": 80.00 }, "Gondia": { "lat": 21.46, "lon": 80.20 }, "Hingoli": { "lat": 19.71, "lon": 77.14 },
-    "Jalgaon": { "lat": 21.00, "lon": 75.56 }, "Jalna": { "lat": 19.83, "lon": 75.88 }, "Kolhapur": { "lat": 16.70, "lon": 74.24 },
-    "Latur": { "lat": 18.40, "lon": 76.58 }, "Mumbai City": { "lat": 19.07, "lon": 72.87 }, "Nagpur": { "lat": 21.14, "lon": 79.08 },
-    "Nanded": { "lat": 19.13, "lon": 77.32 }, "Nandurbar": { "lat": 21.36, "lon": 74.24 }, "Nashik": { "lat": 19.99, "lon": 73.78 },
-    "Palghar": { "lat": 19.69, "lon": 72.77 }, "Parbhani": { "lat": 19.26, "lon": 76.77 }, "Pune": { "lat": 18.52, "lon": 73.85 },
-    "Raigad": { "lat": 18.52, "lon": 73.18 }, "Ratnagiri": { "lat": 16.99, "lon": 73.31 }, "Sangli": { "lat": 16.85, "lon": 74.58 },
-    "Satara": { "lat": 17.68, "lon": 74.01 }, "Sindhudurg": { "lat": 16.35, "lon": 73.55 }, "Solapur": { "lat": 17.68, "lon": 75.90 },
-    "Thane": { "lat": 19.21, "lon": 72.97 }, "Wardha": { "lat": 20.74, "lon": 78.60 }, "Washim": { "lat": 20.10, "lon": 77.13 },
-    "Yavatmal": { "lat": 20.38, "lon": 78.12 }
+    "Delhi": { "lat": 28.61, "lon": 77.23 }, "Mumbai": { "lat": 19.07, "lon": 72.87 }, "Kolkata": { "lat": 22.57, "lon": 88.36 },
+    "Chennai": { "lat": 13.08, "lon": 80.27 }, "Bengaluru": { "lat": 12.97, "lon": 77.59 }, "Hyderabad": { "lat": 17.38, "lon": 78.48 },
+    "Ahmedabad": { "lat": 23.02, "lon": 72.57 }, "Pune": { "lat": 18.52, "lon": 73.85 }, "Jaipur": { "lat": 26.91, "lon": 75.78 },
+    "Lucknow": { "lat": 26.84, "lon": 80.94 }, "Bhopal": { "lat": 23.25, "lon": 77.41 }, "Patna": { "lat": 25.59, "lon": 85.13 },
+    "Guwahati": { "lat": 26.14, "lon": 91.73 }, "Thiruvananthapuram": { "lat": 8.52, "lon": 76.93 }, "Srinagar": { "lat": 34.08, "lon": 74.79 }
 };
 
 
@@ -48,7 +41,7 @@ async function fetchLocations(query) {
     loadingSpinner.textContent = 'Searching...';
     searchResultsContainer.innerHTML = '';
 
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}, Maharashtra, India&format=json&limit=10`;
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}, India&format=json&limit=10`;
 
     try {
         const response = await fetch(url, {
@@ -96,7 +89,7 @@ function redirectToDetails(lat, lon) {
     window.location.href = `details.html?lat=${lat}&lon=${lon}`;
 }
 
-// Get user's current location - UPDATED
+// Get user's current location
 function getCurrentLocation() {
     if (!navigator.geolocation) {
         alert("Geolocation is not supported by your browser.");
@@ -133,7 +126,7 @@ function getCurrentLocation() {
     );
 }
 
-// Fetch risk levels for major districts for the summary
+// Fetch risk levels for major cities for the summary
 async function fetchDistrictSummaries() {
      if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
         console.error("API Key for OpenWeatherMap is not set in config.js");
